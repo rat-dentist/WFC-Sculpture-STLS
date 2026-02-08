@@ -1,17 +1,23 @@
 # WFC Sculpture STLs
 
-3D voxel-based Wave Function Collapse generator that exports a watertight ASCII STL.
+3D voxel-based Wave Function Collapse generator with a desktop UI and STL/PNG/SVG export.
 
 ## What It Does
 - Runs a 3D WFC solver over a voxel grid.
 - Collapses to solid/air tiles plus oriented surface and beam tiles.
-- Exports exposed faces to STL for printing or further modeling.
+- Desktop UI preview with orbit controls.
+- Exports exposed faces to STL.
+- Exports PNG (pencil sketch look) or SVG (black/white outline).
 
-## Run
-This project is intentionally minimal and uses TypeScript files without a build chain.
-Use any TS runner you prefer, or compile with `tsc`.
+## Desktop UI
+Install dependencies, then run the Vite dev server and Electron app.
+```bash
+npm install
+npm run dev
+npm run electron
+```
 
-Example (with `tsx`):
+## Headless CLI
 ```bash
 npx tsx src/index.ts
 ```
