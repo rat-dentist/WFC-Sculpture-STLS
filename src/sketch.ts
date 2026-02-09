@@ -58,6 +58,12 @@ const socketAll = (value: "air" | "solid") => ({
   nz: value,
 });
 
+const socketWithAir = (airDirs: DirectionName[]) => {
+  const sockets = socketAll("solid");
+  for (const dir of airDirs) sockets[dir] = "air";
+  return sockets;
+};
+
 export const createTileSet = (): Tile[] => {
   const tiles: Tile[] = [];
   let id = 0;
@@ -65,7 +71,7 @@ export const createTileSet = (): Tile[] => {
   tiles.push({
     id: id++,
     name: "air",
-    weight: 1,
+    weight: 0.2,
     sockets: socketAll("air"),
     solid: false,
   });
@@ -73,7 +79,7 @@ export const createTileSet = (): Tile[] => {
   tiles.push({
     id: id++,
     name: "solid",
-    weight: 0.6,
+    weight: 1.0,
     sockets: socketAll("solid"),
     solid: true,
   });
@@ -83,23 +89,65 @@ export const createTileSet = (): Tile[] => {
       id: id++,
       name: `surface_${dir.name}`,
       weight: 0.9,
-      sockets: {
-        px: "solid",
-        nx: "solid",
-        py: "solid",
-        ny: "solid",
-        pz: "solid",
-        nz: "solid",
-        [dir.name]: "air",
-      },
+      sockets: socketWithAir([dir.name]),
       solid: true,
     });
+  }
+
+  const xDirs: DirectionName[] = ["px", "nx"];
+  const yDirs: DirectionName[] = ["py", "ny"];
+  const zDirs: DirectionName[] = ["pz", "nz"];
+
+  for (const x of xDirs) {
+    for (const y of yDirs) {
+      tiles.push({
+        id: id++,
+        name: `edge_${x}_${y}`,
+        weight: 0.8,
+        sockets: socketWithAir([x, y]),
+        solid: true,
+      });
+    }
+    for (const z of zDirs) {
+      tiles.push({
+        id: id++,
+        name: `edge_${x}_${z}`,
+        weight: 0.8,
+        sockets: socketWithAir([x, z]),
+        solid: true,
+      });
+    }
+  }
+  for (const y of yDirs) {
+    for (const z of zDirs) {
+      tiles.push({
+        id: id++,
+        name: `edge_${y}_${z}`,
+        weight: 0.8,
+        sockets: socketWithAir([y, z]),
+        solid: true,
+      });
+    }
+  }
+
+  for (const x of xDirs) {
+    for (const y of yDirs) {
+      for (const z of zDirs) {
+        tiles.push({
+          id: id++,
+          name: `corner_${x}_${y}_${z}`,
+          weight: 0.7,
+          sockets: socketWithAir([x, y, z]),
+          solid: true,
+        });
+      }
+    }
   }
 
   tiles.push({
     id: id++,
     name: "column",
-    weight: 0.35,
+    weight: 0.5,
     sockets: {
       px: "air",
       nx: "air",
@@ -114,7 +162,7 @@ export const createTileSet = (): Tile[] => {
   tiles.push({
     id: id++,
     name: "beam_x",
-    weight: 0.25,
+    weight: 0.4,
     sockets: {
       px: "solid",
       nx: "solid",
@@ -129,7 +177,7 @@ export const createTileSet = (): Tile[] => {
   tiles.push({
     id: id++,
     name: "beam_y",
-    weight: 0.25,
+    weight: 0.4,
     sockets: {
       px: "air",
       nx: "air",
@@ -144,7 +192,7 @@ export const createTileSet = (): Tile[] => {
   tiles.push({
     id: id++,
     name: "beam_z",
-    weight: 0.25,
+    weight: 0.4,
     sockets: {
       px: "air",
       nx: "air",

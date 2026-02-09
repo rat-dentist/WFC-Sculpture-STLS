@@ -1,10 +1,10 @@
-# WFC Sculpture STLs
+# Branching Sculpture STLs
 
-3D voxel-based Wave Function Collapse generator with a desktop UI and STL/PNG/SVG export.
+3D voxel-based branching generator with a desktop UI and STL/PNG/SVG export.
 
 ## What It Does
-- Runs a 3D WFC solver over a voxel grid.
-- Collapses to solid/air tiles plus oriented surface and beam tiles.
+- Builds branching T-structure volumes over a voxel grid.
+- Produces solid rectangular coral-like forms.
 - Desktop UI preview with orbit controls.
 - Exports exposed faces to STL.
 - Exports PNG (pencil sketch look) or SVG (black/white outline).

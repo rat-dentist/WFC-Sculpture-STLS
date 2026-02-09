@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WFC Sculpture Studio</title>
+    <title>Branching Sculpture Studio</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -12,15 +12,16 @@
         <div class="brand">
           <div class="dot"></div>
           <div>
-            <div class="title">WFC Sculpture Studio</div>
-            <div class="subtitle">Voxel WFC • STL / PNG / SVG</div>
+            <div class="title">Branching Sculpture Studio</div>
+            <div class="subtitle">Branching T Sculptures - STL / PNG / SVG</div>
           </div>
         </div>
         <div class="actions">
           <button id="btn-generate" class="primary">Generate</button>
-          <button id="btn-stl">Export STL</button>
-          <button id="btn-png">Export PNG</button>
-          <button id="btn-svg">Export SVG</button>
+          <button id="btn-randomize">Randomize</button>
+          <button id="btn-stl">Preview STL</button>
+          <button id="btn-png">Preview PNG</button>
+          <button id="btn-svg">Preview SVG</button>
         </div>
       </header>
       <main class="layout">
@@ -52,11 +53,11 @@
             </label>
             <label class="inline">
               <input id="boundary-air" type="checkbox" checked />
-              Boundary Air
+              Keep Margin
             </label>
             <label class="inline">
               <input id="gravity" type="checkbox" checked />
-              Settle Gravity
+              Extra Branches
             </label>
           </div>
           <div class="panel">
@@ -81,6 +82,19 @@
         </section>
       </main>
     </div>
+    <div id="preview-modal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div id="preview-title" class="modal-title">Preview</div>
+          <button id="preview-close">Close</button>
+        </div>
+        <div id="preview-body" class="modal-body"></div>
+        <div class="modal-actions">
+          <button id="preview-export" class="primary">Export</button>
+        </div>
+      </div>
+    </div>
     <script type="module" src="./renderer.ts"></script>
   </body>
 </html>
+

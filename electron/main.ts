@@ -1,14 +1,20 @@
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
-import { join } from "path";
+import { dirname, join } from "path";
 import { writeFile } from "fs/promises";
+import { fileURLToPath } from "url";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 1280,
     height: 820,
+    minWidth: 1100,
+    minHeight: 700,
     backgroundColor: "#0e0e0c",
+    show: false,
     webPreferences: {
       preload: join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -16,9 +22,12 @@ const createWindow = () => {
     },
   });
 
+  win.once("ready-to-show", () => {
+    win.show();
+  });
+
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL);
-    win.webContents.openDevTools({ mode: "detach" });
   } else {
     win.loadFile(join(__dirname, "../ui-dist/index.html"));
   }

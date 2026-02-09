@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "../electron-dist",
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["./**/*.ts"]
+}

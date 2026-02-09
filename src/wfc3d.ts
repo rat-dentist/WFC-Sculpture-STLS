@@ -183,6 +183,7 @@ export const applyGravity = (tilesOut: Tile[], config: Config, tiles: Tile[]) =>
           const idx = indexFor(x, y, z, sizeX, sizeY);
           const below = indexFor(x, y - 1, z, sizeX, sizeY);
           if (solidById.has(ids[idx]) && !solidById.has(ids[below])) {
+            ids[below] = ids[idx];
             ids[idx] = airId;
             changed = true;
           }
