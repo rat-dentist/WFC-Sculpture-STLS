@@ -2,7 +2,7 @@ export {};
 
 declare global {
   interface Window {
-    api: {
+    api?: {
       saveFile: (payload: {
         data: string;
         encoding: "utf8" | "base64";

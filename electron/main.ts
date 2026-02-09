@@ -7,6 +7,8 @@ const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+let mainWindow: BrowserWindow | null = null;
+
 const createWindow = () => {
   const win = new BrowserWindow({
     width: 1280,
@@ -31,14 +33,33 @@ const createWindow = () => {
   } else {
     win.loadFile(join(__dirname, "../ui-dist/index.html"));
   }
+
+  win.on("closed", () => {
+    if (mainWindow === win) mainWindow = null;
+  });
+
+  mainWindow = win;
 };
 
-app.whenReady().then(() => {
-  createWindow();
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+const gotLock = app.requestSingleInstanceLock();
+
+if (!gotLock) {
+  app.quit();
+} else {
+  app.on("second-instance", () => {
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.focus();
+    }
   });
-});
+
+  app.whenReady().then(() => {
+    createWindow();
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+  });
+}
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

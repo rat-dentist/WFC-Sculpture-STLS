@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Branching Sculpture Studio</title>
+    <title>Branching Sculptures</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -12,87 +12,187 @@
         <div class="brand">
           <div class="dot"></div>
           <div>
-            <div class="title">Branching Sculpture Studio</div>
-            <div class="subtitle">Branching T Sculptures - STL / PNG / SVG</div>
+            <div class="title">Branching Sculptures</div>
+            <div class="subtitle">Procedural branching forms</div>
           </div>
         </div>
         <div class="actions">
           <button id="btn-generate" class="primary">Generate</button>
-          <button id="btn-randomize">Randomize</button>
-          <button id="btn-stl">Preview STL</button>
-          <button id="btn-png">Preview PNG</button>
-          <button id="btn-svg">Preview SVG</button>
+          <button id="btn-texture">Load Texture</button>
+          <button id="btn-export">Export STL</button>
+          <input id="texture-input" type="file" accept="image/*" hidden />
         </div>
       </header>
+      <div class="controls">
+        <label class="slider">
+          Mode
+          <select id="model-mode">
+            <option value="branching">Branching</option>
+            <option value="etch" selected>Etch Cube</option>
+          </select>
+        </label>
+        <label id="branch-density-control" class="slider">
+          Branch Density
+          <input id="branch-density" type="range" min="0" max="100" step="1" value="55" />
+          <span id="branch-density-value">55</span>
+        </label>
+        <label id="thickness-control" class="slider">
+          Thickness
+          <input id="thickness" type="range" min="0" max="100" step="1" value="50" />
+          <span id="thickness-value">50</span>
+        </label>
+        <label class="slider checkbox">
+          <input id="show-texture" type="checkbox" checked />
+          Show Surface Texture
+        </label>
+      </div>
       <main class="layout">
-        <section class="controls">
-          <div class="panel">
-            <div class="panel-title">Grid</div>
-            <label>
-              X
-              <input id="size-x" type="number" min="8" max="64" step="1" value="24" />
-            </label>
-            <label>
-              Y
-              <input id="size-y" type="number" min="8" max="64" step="1" value="20" />
-            </label>
-            <label>
-              Z
-              <input id="size-z" type="number" min="8" max="64" step="1" value="24" />
-            </label>
-            <label>
-              Cell Size
-              <input id="cell-size" type="number" min="0.5" max="5" step="0.1" value="1" />
-            </label>
-          </div>
-          <div class="panel">
-            <div class="panel-title">Generation</div>
-            <label>
-              Seed
-              <input id="seed" type="number" step="1" value="1337" />
-            </label>
-            <label class="inline">
-              <input id="boundary-air" type="checkbox" checked />
-              Keep Margin
-            </label>
-            <label class="inline">
-              <input id="gravity" type="checkbox" checked />
-              Extra Branches
-            </label>
-          </div>
-          <div class="panel">
-            <div class="panel-title">Export Style</div>
-            <label>
-              PNG Size
-              <input id="png-size" type="number" min="512" max="2048" step="128" value="1024" />
-            </label>
-            <label>
-              Stroke Weight
-              <input id="stroke-weight" type="number" min="0.5" max="3" step="0.1" value="1.2" />
-            </label>
-            <label>
-              Jitter
-              <input id="stroke-jitter" type="number" min="0" max="2" step="0.1" value="0.7" />
-            </label>
-          </div>
-        </section>
-        <section class="viewport">
+        <section class="viewport full">
           <canvas id="preview"></canvas>
           <div id="status" class="status">Ready.</div>
         </section>
+        <aside class="studio">
+          <div class="studio-header">
+            <div>
+              <div class="studio-title">Depth Studio</div>
+              <div class="studio-subtitle">Tune the height map before applying</div>
+            </div>
+            <button id="depth-apply">Apply To Sculpture</button>
+          </div>
+          <div class="studio-canvas">
+            <canvas id="depth-canvas"></canvas>
+          </div>
+          <div class="studio-controls">
+            <label class="slider">
+              Detail Depth (mm)
+              <input id="carve-depth" type="range" min="0" max="4" step="0.1" value="1.5" />
+              <span id="carve-depth-value">1.5</span>
+            </label>
+            <label id="etch-size-control" class="slider hidden">
+              Cube Size (mm)
+              <input id="etch-size" type="range" min="120" max="250" step="5" value="200" />
+              <span id="etch-size-value">200</span>
+            </label>
+            <label id="etch-gain-control" class="slider hidden">
+              Depth Gain
+              <input id="etch-gain" type="range" min="0.5" max="2.5" step="0.1" value="2.0" />
+              <span id="etch-gain-value">2.0</span>
+            </label>
+            <label id="etch-margin-control" class="slider hidden">
+              Margin (mm)
+              <input id="etch-margin" type="range" min="0" max="20" step="0.5" value="6" />
+              <span id="etch-margin-value">6.0</span>
+            </label>
+            <label id="etch-resolution-control" class="slider hidden">
+              Mesh Resolution
+              <input id="etch-resolution" type="range" min="64" max="512" step="32" value="512" />
+              <span id="etch-resolution-value">512</span>
+            </label>
+            <label id="etch-wrap-control" class="slider hidden">
+              Wrap Mode
+              <select id="etch-wrap">
+                <option value="face">Per Face</option>
+                <option value="sides" selected>Wrap Sides</option>
+              </select>
+            </label>
+            <label id="etch-faces-control" class="slider checkbox hidden">
+              <input id="etch-all-faces" type="checkbox" checked />
+              Apply To All Faces
+            </label>
+            <label id="etch-rotate-control" class="slider hidden">
+              Rotation
+              <select id="etch-rotation">
+                <option value="0" selected>0</option>
+                <option value="90">90</option>
+                <option value="180">180</option>
+                <option value="270">270</option>
+              </select>
+            </label>
+            <label id="etch-flipx-control" class="slider checkbox hidden">
+              <input id="etch-flip-x" type="checkbox" />
+              Flip X
+            </label>
+            <label id="etch-flipy-control" class="slider checkbox hidden">
+              <input id="etch-flip-y" type="checkbox" checked />
+              Flip Y
+            </label>
+            <label class="slider">
+              Blur
+              <input id="depth-blur" type="range" min="0" max="8" step="0.5" value="0" />
+              <span id="depth-blur-value">0.0</span>
+            </label>
+            <label class="slider">
+              Gamma
+              <input id="depth-gamma" type="range" min="0.3" max="3" step="0.05" value="1" />
+              <span id="depth-gamma-value">1.00</span>
+            </label>
+            <label class="slider">
+              Contrast
+              <input id="depth-contrast" type="range" min="-50" max="50" step="1" value="0" />
+              <span id="depth-contrast-value">0</span>
+            </label>
+            <label class="slider">
+              Relief Contrast
+              <input id="depth-relief" type="range" min="-100" max="100" step="1" value="20" />
+              <span id="depth-relief-value">20</span>
+            </label>
+            <label class="slider">
+              Midtone Focus
+              <input id="depth-midtone" type="range" min="0" max="100" step="1" value="35" />
+              <span id="depth-midtone-value">35</span>
+            </label>
+            <label class="slider">
+              High-pass Detail
+              <input id="depth-highpass" type="range" min="0" max="60" step="1" value="15" />
+              <span id="depth-highpass-value">15</span>
+            </label>
+            <label class="slider">
+              Posterize
+              <input id="depth-posterize" type="range" min="0" max="16" step="1" value="0" />
+              <span id="depth-posterize-value">0</span>
+            </label>
+            <label class="slider">
+              Low Tone
+              <input id="carve-low" type="range" min="0" max="100" step="1" value="20" />
+              <span id="carve-low-value">20</span>
+            </label>
+            <label class="slider">
+              High Tone
+              <input id="carve-high" type="range" min="0" max="100" step="1" value="85" />
+              <span id="carve-high-value">85</span>
+            </label>
+            <label class="slider checkbox">
+              <input id="detail-emboss" type="checkbox" />
+              Emboss (Add Detail)
+            </label>
+            <label class="slider checkbox">
+              <input id="depth-invert" type="checkbox" />
+              Invert Depth
+            </label>
+            <label class="slider checkbox">
+              <input id="depth-smooth" type="checkbox" />
+              Smoothing Mode
+            </label>
+            <label class="slider checkbox">
+              <input id="depth-raking" type="checkbox" checked />
+              Raking Light
+            </label>
+            <label class="slider">
+              Light Angle
+              <input id="depth-light-angle" type="range" min="0" max="360" step="1" value="45" />
+              <span id="depth-light-angle-value">45</span>
+            </label>
+            <label class="slider checkbox">
+              <input id="depth-live" type="checkbox" />
+              Live Apply
+            </label>
+            <label class="slider checkbox">
+              <input id="depth-preview" type="checkbox" />
+              Preview Depth Map
+            </label>
+          </div>
+        </aside>
       </main>
-    </div>
-    <div id="preview-modal" class="modal hidden" role="dialog" aria-modal="true">
-      <div class="modal-card">
-        <div class="modal-header">
-          <div id="preview-title" class="modal-title">Preview</div>
-          <button id="preview-close">Close</button>
-        </div>
-        <div id="preview-body" class="modal-body"></div>
-        <div class="modal-actions">
-          <button id="preview-export" class="primary">Export</button>
-        </div>
-      </div>
     </div>
     <script type="module" src="./renderer.ts"></script>
   </body>

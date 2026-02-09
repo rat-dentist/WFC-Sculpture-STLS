@@ -7,8 +7,8 @@
     "electron:build": "tsc -p electron/tsconfig.json",
     "electron:watch": "tsc -p electron/tsconfig.json -w",
     "electron:run": "wait-on http://localhost:5173 electron-dist/main.js && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron electron-dist/main.js",
-    "start": "concurrently -k \"npm:dev\" \"npm:electron:watch\" \"npm:electron:run\"",
     "build": "vite build",
+    "start": "concurrently -k \"npm:dev\" \"npm:electron:watch\" \"npm:electron:run\"",
     "preview": "vite preview"
   },
   "devDependencies": {
