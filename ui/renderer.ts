@@ -1,6 +1,7 @@
 ﻿import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createTileSet, defaultConfig, type Config, type Tile } from "@core/sketch";
+import { applyGravity, collapseToTiles, runWfc } from "@core/wfc3d";
 
 type Face = {
   normal: [number, number, number];
@@ -19,10 +20,20 @@ const ui = {
   modelMode: document.getElementById("model-mode") as HTMLSelectElement,
   branchDensityControl: document.getElementById("branch-density-control") as HTMLElement,
   thicknessControl: document.getElementById("thickness-control") as HTMLElement,
+  branchStyleControl: document.getElementById("branch-style-control") as HTMLElement,
+  branchComplexityControl: document.getElementById("branch-complexity-control") as HTMLElement,
+  branchVariationControl: document.getElementById("branch-variation-control") as HTMLElement,
+  branchProjectionControl: document.getElementById("branch-projection-control") as HTMLElement,
   branchDensity: document.getElementById("branch-density") as HTMLInputElement,
   branchDensityValue: document.getElementById("branch-density-value") as HTMLSpanElement,
   thickness: document.getElementById("thickness") as HTMLInputElement,
   thicknessValue: document.getElementById("thickness-value") as HTMLSpanElement,
+  branchStyle: document.getElementById("branch-style") as HTMLSelectElement,
+  branchComplexity: document.getElementById("branch-complexity") as HTMLInputElement,
+  branchComplexityValue: document.getElementById("branch-complexity-value") as HTMLSpanElement,
+  branchVariation: document.getElementById("branch-variation") as HTMLInputElement,
+  branchVariationValue: document.getElementById("branch-variation-value") as HTMLSpanElement,
+  branchProjection: document.getElementById("branch-projection") as HTMLSelectElement,
   showTexture: document.getElementById("show-texture") as HTMLInputElement,
   etchSizeControl: document.getElementById("etch-size-control") as HTMLElement,
   etchGainControl: document.getElementById("etch-gain-control") as HTMLElement,
@@ -204,10 +215,16 @@ const setStatus = (message: string) => {
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 type DetailMode = "carve" | "emboss";
-type ModelMode = "branching" | "etch";
+type ModelMode = "branching" | "etch" | "wfc";
+type BranchStyle = "balanced" | "stacked" | "cantilever" | "crown";
+type BranchProjection = "triplanar" | "dominant" | "planar" | "cylindrical";
 
 const getDetailMode = (): DetailMode => (ui.detailEmboss.checked ? "emboss" : "carve");
-const getModelMode = (): ModelMode => (ui.modelMode.value === "etch" ? "etch" : "branching");
+const getModelMode = (): ModelMode => {
+  if (ui.modelMode.value === "etch") return "etch";
+  if (ui.modelMode.value === "wfc") return "wfc";
+  return "branching";
+};
 
 const getEtchSettings = () => ({
   cubeSizeMm: Number(ui.etchSize.value),
@@ -221,10 +238,21 @@ const getEtchSettings = () => ({
   flipY: ui.etchFlipY.checked,
 });
 
+const getBranchProjection = (): BranchProjection => {
+  const value = ui.branchProjection.value as BranchProjection;
+  return value || "triplanar";
+};
+
 const updateModeUI = () => {
-  const etchMode = getModelMode() === "etch";
-  ui.branchDensityControl.classList.toggle("hidden", etchMode);
-  ui.thicknessControl.classList.toggle("hidden", etchMode);
+  const mode = getModelMode();
+  const etchMode = mode === "etch";
+  const branchingMode = mode === "branching";
+  ui.branchDensityControl.classList.toggle("hidden", !branchingMode);
+  ui.thicknessControl.classList.toggle("hidden", !branchingMode);
+  ui.branchStyleControl.classList.toggle("hidden", !branchingMode);
+  ui.branchComplexityControl.classList.toggle("hidden", !branchingMode);
+  ui.branchVariationControl.classList.toggle("hidden", !branchingMode);
+  ui.branchProjectionControl.classList.toggle("hidden", etchMode);
   ui.etchSizeControl.classList.toggle("hidden", !etchMode);
   ui.etchGainControl.classList.toggle("hidden", !etchMode);
   ui.etchMarginControl.classList.toggle("hidden", !etchMode);
@@ -258,6 +286,8 @@ const getCarveSettings = () => {
 const updateControlLabels = () => {
   ui.branchDensityValue.textContent = ui.branchDensity.value;
   ui.thicknessValue.textContent = ui.thickness.value;
+  ui.branchComplexityValue.textContent = ui.branchComplexity.value;
+  ui.branchVariationValue.textContent = ui.branchVariation.value;
   ui.etchSizeValue.textContent = ui.etchSize.value;
   ui.etchGainValue.textContent = Number(ui.etchGain.value).toFixed(1);
   ui.etchMarginValue.textContent = Number(ui.etchMargin.value).toFixed(1);
@@ -682,7 +712,14 @@ window.addEventListener("unhandledrejection", (event) => {
   setStatus(`Error: ${reason}`);
 });
 
-const readConfig = (): Config & { branchDensity: number; thickness: number } => ({
+const readConfig = (): Config & {
+  branchDensity: number;
+  thickness: number;
+  branchStyle: BranchStyle;
+  branchComplexity: number;
+  branchVariation: number;
+  branchProjection: BranchProjection;
+} => ({
   sizeX: 26,
   sizeY: 22,
   sizeZ: 26,
@@ -694,6 +731,10 @@ const readConfig = (): Config & { branchDensity: number; thickness: number } => 
   outputName: defaultConfig.outputName,
   branchDensity: Number(ui.branchDensity.value) / 100,
   thickness: Number(ui.thickness.value) / 100,
+  branchStyle: (ui.branchStyle.value as BranchStyle) || "balanced",
+  branchComplexity: Number(ui.branchComplexity.value) / 100,
+  branchVariation: Number(ui.branchVariation.value) / 100,
+  branchProjection: (ui.branchProjection.value as BranchProjection) || "triplanar",
 });
 
 const seededRandom = (seed: number) => {
@@ -716,6 +757,15 @@ type Segment = {
   jitter: number;
   seed: number;
   start: [number, number, number];
+};
+
+type BranchingConfig = Config & {
+  branchDensity: number;
+  thickness: number;
+  branchStyle: BranchStyle;
+  branchComplexity: number;
+  branchVariation: number;
+  branchProjection: BranchProjection;
 };
 
 const indexOf = (x: number, y: number, z: number, sizeX: number, sizeY: number) => x + y * sizeX + z * sizeX * sizeY;
@@ -803,7 +853,7 @@ const extrudeTip = (grid: Uint8Array, axis: Axis, dir: 1 | -1, start: [number, n
   fillSegment(grid, seg, sizeX, sizeY, sizeZ);
 };
 
-const generateBranching = (config: Config & { branchDensity: number; thickness: number }) => {
+const generateBranching = (config: BranchingConfig) => {
   const rng = seededRandom(config.seed || 1);
   const sizeX = config.sizeX;
   const sizeY = config.sizeY;
@@ -812,10 +862,15 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
 
   const centerX = Math.floor(sizeX / 2);
   const centerZ = Math.floor(sizeZ / 2);
+  const density = clamp01(config.branchDensity);
+  const complexity = clamp01(config.branchComplexity);
+  const variation = clamp01(config.branchVariation);
+  const style = config.branchStyle;
+  const varianceStrength = 0.35 + variation * 0.85;
   const thicknessScale = 0.45 + config.thickness * 1.9;
   const baseThickness = Math.max(1, Math.min(9, Math.floor((Math.min(sizeX, sizeZ) / 6) * thicknessScale)));
   const margin = config.boundaryAir ? 1 : 0;
-  const trunkLen = Math.max(3, sizeY - margin * 2);
+  const trunkLen = Math.max(3, Math.floor((sizeY - margin * 2) * (0.8 + complexity * 0.3)));
   const startY = margin;
 
   const makeSegment = (axis: Axis, dir: 1 | -1, length: number, tStart: number, tEnd: number, start: [number, number, number]) => ({
@@ -824,42 +879,73 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
     length,
     thicknessStart: tStart,
     thicknessEnd: tEnd,
-    jitter: Math.max(1, Math.round(tStart * 0.35)),
+    jitter: Math.max(1, Math.round(tStart * (0.3 + varianceStrength * 0.35))),
     seed: randInt(rng, 1, 1_000_000),
     start,
   });
 
-  const trunkStart = Math.max(1, Math.round(baseThickness * (0.8 + rng() * 0.45)));
-  const trunkEnd = Math.max(1, Math.round(baseThickness * (0.25 + rng() * 0.3)));
+  const trunkStart = Math.max(1, Math.round(baseThickness * (0.7 + rng() * (0.35 + varianceStrength * 0.35))));
+  const trunkEnd = Math.max(1, Math.round(baseThickness * (0.2 + rng() * (0.25 + varianceStrength * 0.25))));
 
   const segments: Segment[] = [makeSegment("y", 1, trunkLen, trunkStart, trunkEnd, [centerX, startY, centerZ])];
 
-  const density = Math.max(0, Math.min(1.0, config.branchDensity));
   if (density < 0.05) {
     grid[indexOf(centerX, Math.floor(sizeY / 2), centerZ, sizeX, sizeY)] = 1;
     return grid;
   }
 
-  const pivotY = Math.min(sizeY - 1 - margin, startY + Math.floor(trunkLen * 0.55));
-  const tLen = Math.max(4, Math.floor(Math.min(sizeX, sizeZ) * 0.35));
-  const mainArmLen = Math.max(4, Math.floor(tLen * (0.8 + rng() * 0.6)));
-  if (density > 0.08) {
-    segments.push(makeSegment("x", 1, mainArmLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, pivotY, centerZ]));
+  const pivotY = Math.min(sizeY - 1 - margin, startY + Math.floor(trunkLen * (0.45 + complexity * 0.25)));
+  const tLen = Math.max(4, Math.floor(Math.min(sizeX, sizeZ) * (0.3 + complexity * 0.2)));
+  const mainArmLen = Math.max(4, Math.floor(tLen * (0.7 + rng() * (0.4 + varianceStrength * 0.5))));
+
+  const addBalancedArms = (y: number, lengthScale: number) => {
+    const armLen = Math.max(3, Math.floor(mainArmLen * lengthScale));
+    if (density > 0.08) {
+      segments.push(makeSegment("x", 1, armLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, y, centerZ]));
+    }
+    if (density > 0.12) {
+      segments.push(makeSegment("x", -1, armLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, y, centerZ]));
+    }
+    if (density > 0.2) {
+      const zLen = Math.max(3, Math.floor(armLen * (0.6 + rng() * 0.5)));
+      segments.push(makeSegment("z", rng() > 0.5 ? 1 : -1, zLen, Math.max(2, trunkEnd - 1), Math.max(1, Math.round(trunkEnd * 0.6)), [centerX, y, centerZ]));
+    }
+  };
+
+  if (style === "cantilever") {
+    const dir = rng() > 0.5 ? 1 : -1;
+    const longLen = Math.max(4, Math.floor(mainArmLen * (1.2 + complexity * 0.6)));
+    segments.push(makeSegment("x", dir, longLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.55)), [centerX, pivotY, centerZ]));
+    if (density > 0.3) {
+      const counterLen = Math.max(3, Math.floor(mainArmLen * (0.45 + rng() * 0.3)));
+      segments.push(makeSegment("x", (dir * -1) as 1 | -1, counterLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.6)), [centerX, pivotY, centerZ]));
+    }
+  } else {
+    addBalancedArms(pivotY, 1);
   }
-  if (density > 0.12) {
-    segments.push(makeSegment("x", -1, mainArmLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, pivotY, centerZ]));
+
+  if (style === "crown") {
+    const crownY = Math.min(sizeY - 2 - margin, startY + Math.floor(trunkLen * 0.85));
+    const crownLevels = 1 + Math.round(complexity * 2);
+    for (let i = 0; i < crownLevels; i += 1) {
+      const levelY = Math.min(sizeY - 2 - margin, crownY - i * 2);
+      addBalancedArms(levelY, 0.75 + rng() * 0.35);
+    }
   }
-  if (density > 0.2 && rng() > 0.4) {
-    const zLen = Math.max(3, Math.floor(Math.min(sizeX, sizeZ) * (0.2 + rng() * 0.25)));
-    segments.push(
-      makeSegment("z", 1, zLen, Math.max(2, trunkEnd - 1), Math.max(1, Math.round(trunkEnd * 0.6)), [centerX, pivotY, centerZ])
-    );
+
+  if (style === "stacked" && density > 0.15) {
+    const stackLevels = 2 + Math.round(complexity * 3);
+    for (let i = 0; i < stackLevels; i += 1) {
+      const t = stackLevels === 1 ? 0.5 : i / (stackLevels - 1);
+      const levelY = Math.min(sizeY - 2 - margin, startY + Math.floor(trunkLen * (0.2 + t * 0.6)));
+      addBalancedArms(levelY, 0.55 + t * 0.55);
+    }
   }
 
   const extraBranchFactor = config.settleGravity ? 1 : 0;
   const maxSegments = Math.min(
-    180,
-    Math.max(1, Math.round(1 + density * density * 150) + extraBranchFactor * 6)
+    240,
+    Math.max(1, Math.round(6 + density * density * 120 + complexity * 130) + extraBranchFactor * 6)
   );
 
   for (let i = 0; i < segments.length && segments.length < maxSegments; i += 1) {
@@ -867,8 +953,8 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
     if (seg.length < 6) continue;
     const branchCount =
       seg.axis === "y"
-        ? randInt(rng, 1, 2 + Math.round(density * 4) + extraBranchFactor)
-        : randInt(rng, 0, 1 + Math.round(density * 3) + extraBranchFactor);
+        ? randInt(rng, 1, 2 + Math.round(density * 4 + complexity * 3) + extraBranchFactor)
+        : randInt(rng, 0, 1 + Math.round(density * 3 + complexity * 2) + extraBranchFactor);
     for (let b = 0; b < branchCount && segments.length < maxSegments; b += 1) {
       const pivotOffset = randInt(rng, 1, Math.max(2, seg.length - 2));
       const px = seg.axis === "x" ? seg.start[0] + seg.dir * pivotOffset : seg.start[0];
@@ -884,14 +970,17 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
       })();
       const inwardOutwardFlip = rng() > 0.5 ? 1 : -1;
       const finalDir = (dir * inwardOutwardFlip) as 1 | -1;
-      const length = Math.max(2, Math.floor(seg.length * (0.2 + rng() * 0.55)));
-      const thinBias = rng() * (1 - density * 0.4);
-      const tStart = Math.max(1, Math.round(seg.thicknessStart * (0.25 + rng() * 0.55) * (0.7 + thinBias)));
-      const tEnd = Math.max(1, Math.round(tStart * (0.25 + rng() * 0.55)));
+      const length = Math.max(2, Math.floor(seg.length * (0.2 + rng() * (0.55 + complexity * 0.25))));
+      const thinBias = rng() * (1 - density * 0.4) + variation * 0.35;
+      const tStart = Math.max(
+        1,
+        Math.round(seg.thicknessStart * (0.2 + rng() * (0.5 + variation * 0.4)) * (0.65 + thinBias))
+      );
+      const tEnd = Math.max(1, Math.round(tStart * (0.25 + rng() * (0.45 + variation * 0.35))));
 
       segments.push(makeSegment(axis, finalDir, length, tStart, tEnd, [px, py, pz]));
 
-      if (rng() > 0.35 && segments.length < maxSegments) {
+      if (rng() > 0.35 - complexity * 0.1 && segments.length < maxSegments) {
         const stubAxis = axes[randInt(rng, 0, axes.length - 1)];
         const stubDir = rng() > 0.5 ? 1 : -1;
         const stubLen = randInt(rng, 2, 4);
@@ -899,7 +988,7 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
         segments.push(makeSegment(stubAxis, stubDir, stubLen, stubStart, Math.max(1, Math.round(stubStart * 0.5)), [px, py, pz]));
       }
 
-      if (rng() > 0.45 && segments.length < maxSegments) {
+      if (rng() > 0.45 - complexity * 0.15 && segments.length < maxSegments) {
         const antennaAxis = axes[randInt(rng, 0, axes.length - 1)];
         const antennaDir = rng() > 0.5 ? 1 : -1;
         const antennaLen = randInt(rng, 4, 12);
@@ -925,6 +1014,13 @@ const generateBranching = (config: Config & { branchDensity: number; thickness: 
   }
 
   return grid;
+};
+
+const generateWfcTiles = (config: Config) => {
+  const grid = runWfc(config, tiles);
+  let tilesOut = collapseToTiles(grid, tiles);
+  tilesOut = applyGravity(tilesOut, config, tiles);
+  return tilesOut;
 };
 
 const dilate = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number, iterations = 1) => {
@@ -1211,6 +1307,62 @@ const sampleTriPlanarTone = (
   return clamp01((sx * wx + sy * wy + sz * wz) / sum);
 };
 
+const sampleDominantAxisTone = (
+  map: HeightMap,
+  p: number[],
+  normal: number[],
+  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
+) => {
+  const ax = Math.abs(normal[0]);
+  const ay = Math.abs(normal[1]);
+  const az = Math.abs(normal[2]);
+  if (ax >= ay && ax >= az) {
+    return sampleHeightMap(map, (p[2] - bounds.minZ) / bounds.spanZ, (p[1] - bounds.minY) / bounds.spanY);
+  }
+  if (ay >= az) {
+    return sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[2] - bounds.minZ) / bounds.spanZ);
+  }
+  return sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[1] - bounds.minY) / bounds.spanY);
+};
+
+const samplePlanarTone = (
+  map: HeightMap,
+  p: number[],
+  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
+) => sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[2] - bounds.minZ) / bounds.spanZ);
+
+const sampleCylindricalTone = (
+  map: HeightMap,
+  p: number[],
+  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
+) => {
+  const centerX = bounds.minX + bounds.spanX * 0.5;
+  const centerZ = bounds.minZ + bounds.spanZ * 0.5;
+  const angle = Math.atan2(p[2] - centerZ, p[0] - centerX);
+  const u = (angle + Math.PI) / (Math.PI * 2);
+  const v = (p[1] - bounds.minY) / bounds.spanY;
+  return sampleHeightMap(map, u, v);
+};
+
+const sampleDetailTone = (
+  map: HeightMap,
+  p: number[],
+  normal: number[],
+  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number },
+  projection: BranchProjection
+) => {
+  switch (projection) {
+    case "dominant":
+      return sampleDominantAxisTone(map, p, normal, bounds);
+    case "planar":
+      return samplePlanarTone(map, p, bounds);
+    case "cylindrical":
+      return sampleCylindricalTone(map, p, bounds);
+    default:
+      return sampleTriPlanarTone(map, p, normal, bounds);
+  }
+};
+
 const clampDisplacementSlopes = (displacements: Float32Array, basePositions: number[][], indices: number[], sign: number, maxDepth: number) => {
   const neighbors = Array.from({ length: basePositions.length }, () => new Set<number>());
   const addEdge = (a: number, b: number) => {
@@ -1367,6 +1519,7 @@ const buildDetailedGeometry = (faces: Face[]) => {
   const mode = getDetailMode();
   const sign = mode === "emboss" ? 1 : -1;
   const bounds = computeUvBounds(faces);
+  const projection = getBranchProjection();
   const segments = getDetailSubdivisions(faces.length);
   const vertexLookup = new Map<string, number>();
   const getVertexKey = (p: number[]) => `${Math.round(p[0] * 100000)},${Math.round(p[1] * 100000)},${Math.round(p[2] * 100000)}`;
@@ -1424,13 +1577,14 @@ const buildDetailedGeometry = (faces: Face[]) => {
   });
   const displacements = new Float32Array(basePositions.length);
   for (let i = 0; i < basePositions.length; i += 1) {
-    const tone = sampleTriPlanarTone(detailMap, basePositions[i], smoothNormals[i], bounds);
+    const tone = sampleDetailTone(detailMap, basePositions[i], smoothNormals[i], bounds, projection);
     const depthValue = mode === "emboss" ? tone : 1 - tone;
     const sculptMode = getModelMode();
-    const depthGamma = sculptMode === "branching" ? 1.5 : 2.2;
+    const branchLike = sculptMode === "branching" || sculptMode === "wfc";
+    const depthGamma = branchLike ? 1.5 : 2.2;
     const tonedDepth = Math.pow(clamp01(depthValue), depthGamma);
     const coverage = Math.min(1, normalCounts[i] / 3);
-    const edgeFloor = sculptMode === "branching" ? 0.4 : 0.2;
+    const edgeFloor = branchLike ? 0.4 : 0.2;
     const edgeFactor = edgeFloor + (1 - edgeFloor) * coverage;
     displacements[i] = tonedDepth * depthUnits * sign * edgeFactor;
   }
@@ -1620,7 +1774,8 @@ const rebuildMesh = () => {
 };
 
 const applySurfaceDetail = () => {
-  if (getModelMode() === "etch") {
+  const mode = getModelMode();
+  if (mode === "etch") {
     currentFaces = [];
     modelScale = 1;
     const geometry = buildEtchedCubeGeometry(getActiveDetailMap());
@@ -1636,11 +1791,12 @@ const applySurfaceDetail = () => {
     return;
   }
 
-  if (!baseGrid) return;
-  const sizeX = currentConfig.sizeX;
-  const sizeY = currentConfig.sizeY;
-  const sizeZ = currentConfig.sizeZ;
-  currentTiles = Array.from(baseGrid, (value) => (value ? solidTile : airTile));
+  if (mode === "branching") {
+    if (!baseGrid) return;
+    currentTiles = Array.from(baseGrid, (value) => (value ? solidTile : airTile));
+  } else if (mode === "wfc") {
+    if (currentTiles.length === 0) return;
+  }
   rebuildMesh();
   const solidCount = currentTiles.filter((tile) => tile.solid).length;
   const { maxDepth } = getCarveSettings();
@@ -1660,14 +1816,22 @@ const generate = () => {
   // Let the UI paint the busy state before heavy work.
   setTimeout(() => {
     try {
-      if (getModelMode() === "etch") {
+      const mode = getModelMode();
+      if (mode === "etch") {
         baseGrid = null;
         applySurfaceDetail();
         return;
       }
       const initialConfig = readConfig();
+      if (mode === "wfc") {
+        currentConfig = initialConfig;
+        baseGrid = null;
+        currentTiles = generateWfcTiles(initialConfig);
+        applySurfaceDetail();
+        return;
+      }
       const attempts = Math.max(1, initialConfig.maxRetries);
-      let chosenConfig: Config & { branchDensity: number; thickness: number } | null = null;
+      let chosenConfig: BranchingConfig | null = null;
       let chosenGrid: Uint8Array | null = null;
 
       for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -1734,19 +1898,20 @@ const voxelToStl = (faces: Face[]) => {
 };
 
 const geometryToStl = (geometry: THREE.BufferGeometry) => {
-  const positions = geometry.getAttribute("position");
-  const index = geometry.getIndex();
+  const source = geometry.getIndex() ? geometry.toNonIndexed() : geometry;
+  const positions = source.getAttribute("position");
+  if (!positions) return "";
   const triangles: string[] = [];
   const getVec = (vertexIndex: number) => [
     positions.getX(vertexIndex),
     positions.getY(vertexIndex),
     positions.getZ(vertexIndex),
   ];
-  const triangleCount = index ? index.count / 3 : positions.count / 3;
+  const triangleCount = positions.count / 3;
   for (let tri = 0; tri < triangleCount; tri += 1) {
-    const i0 = index ? index.getX(tri * 3) : tri * 3;
-    const i1 = index ? index.getX(tri * 3 + 1) : tri * 3 + 1;
-    const i2 = index ? index.getX(tri * 3 + 2) : tri * 3 + 2;
+    const i0 = tri * 3;
+    const i1 = tri * 3 + 1;
+    const i2 = tri * 3 + 2;
     const a = getVec(i0);
     const b = getVec(i1);
     const c = getVec(i2);
@@ -1780,20 +1945,30 @@ const exportStl = async () => {
     return;
   }
   const stl = currentGeometry ? geometryToStl(currentGeometry) : voxelToStl(currentFaces);
+  if (!stl) {
+    setStatus("STL export failed. Try regenerating.");
+    return;
+  }
   if (window.api?.saveFile) {
-    await window.api.saveFile({
+    const result = await window.api.saveFile({
       data: stl,
       encoding: "utf8",
       suggestedName: "branching_sculpture.stl",
       filters: [{ name: "STL", extensions: ["stl"] }],
     });
+    if (result && "ok" in result && !result.ok) {
+      setStatus("STL export canceled.");
+      return;
+    }
   } else {
     const blob = new Blob([stl], { type: "model/stl" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "branching_sculpture.stl";
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     URL.revokeObjectURL(url);
   }
   setStatus("STL exported.");
@@ -1815,6 +1990,15 @@ const scheduleDetailUpdate = () => {
     updateDepthStudioPreview();
     buildDepthPreviewTexture();
     if (ui.depthLive.checked) applySurfaceDetail();
+  }, 30);
+};
+
+let projectionTimer: number | null = null;
+const scheduleProjectionUpdate = () => {
+  updateControlLabels();
+  if (projectionTimer) window.clearTimeout(projectionTimer);
+  projectionTimer = window.setTimeout(() => {
+    applySurfaceDetail();
   }, 30);
 };
 
@@ -1860,6 +2044,16 @@ ui.thickness.addEventListener("input", () => {
   updateControlLabels();
   scheduleGenerate();
 });
+ui.branchStyle.addEventListener("change", scheduleGenerate);
+ui.branchComplexity.addEventListener("input", () => {
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.branchVariation.addEventListener("input", () => {
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.branchProjection.addEventListener("change", scheduleProjectionUpdate);
 ui.etchSize.addEventListener("input", () => {
   updateControlLabels();
   scheduleGenerate();
@@ -1933,7 +2127,3 @@ ui.depthApply.addEventListener("click", () => {
 resize();
 generate();
 render();
-
-
-
-

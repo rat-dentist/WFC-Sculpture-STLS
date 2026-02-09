@@ -28,6 +28,7 @@
           Mode
           <select id="model-mode">
             <option value="branching">Branching</option>
+            <option value="wfc">WFC Sculpture</option>
             <option value="etch" selected>Etch Cube</option>
           </select>
         </label>
@@ -40,6 +41,34 @@
           Thickness
           <input id="thickness" type="range" min="0" max="100" step="1" value="50" />
           <span id="thickness-value">50</span>
+        </label>
+        <label id="branch-style-control" class="slider">
+          Branch Style
+          <select id="branch-style">
+            <option value="balanced" selected>Balanced</option>
+            <option value="stacked">Stacked</option>
+            <option value="cantilever">Cantilever</option>
+            <option value="crown">Crown</option>
+          </select>
+        </label>
+        <label id="branch-complexity-control" class="slider">
+          Complexity
+          <input id="branch-complexity" type="range" min="0" max="100" step="1" value="55" />
+          <span id="branch-complexity-value">55</span>
+        </label>
+        <label id="branch-variation-control" class="slider">
+          Scale Variation
+          <input id="branch-variation" type="range" min="0" max="100" step="1" value="45" />
+          <span id="branch-variation-value">45</span>
+        </label>
+        <label id="branch-projection-control" class="slider">
+          Detail Projection
+          <select id="branch-projection">
+            <option value="triplanar" selected>Tri-planar Wrap</option>
+            <option value="dominant">Dominant Axis</option>
+            <option value="planar">Planar (Top)</option>
+            <option value="cylindrical">Cylindrical Wrap</option>
+          </select>
         </label>
         <label class="slider checkbox">
           <input id="show-texture" type="checkbox" checked />
@@ -80,8 +109,8 @@
             </label>
             <label id="etch-margin-control" class="slider hidden">
               Margin (mm)
-              <input id="etch-margin" type="range" min="0" max="20" step="0.5" value="6" />
-              <span id="etch-margin-value">6.0</span>
+              <input id="etch-margin" type="range" min="0" max="20" step="0.5" value="0" />
+              <span id="etch-margin-value">0.0</span>
             </label>
             <label id="etch-resolution-control" class="slider hidden">
               Mesh Resolution
@@ -197,4 +226,3 @@
     <script type="module" src="./renderer.ts"></script>
   </body>
 </html>
-
