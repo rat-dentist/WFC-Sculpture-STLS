@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Branching Sculptures</title>
+    <title>Etched Sculptures</title>
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -12,8 +12,8 @@
         <div class="brand">
           <div class="dot"></div>
           <div>
-            <div class="title">Branching Sculptures</div>
-            <div class="subtitle">Procedural branching forms</div>
+            <div class="title">Etched Sculptures</div>
+            <div class="subtitle">Texture-etched blocks</div>
           </div>
         </div>
         <div class="actions">
@@ -25,49 +25,10 @@
       </header>
       <div class="controls">
         <label class="slider">
-          Mode
-          <select id="model-mode">
-            <option value="branching">Branching</option>
-            <option value="wfc">WFC Sculpture</option>
-            <option value="etch" selected>Etch Cube</option>
-          </select>
-        </label>
-        <label id="branch-density-control" class="slider">
-          Branch Density
-          <input id="branch-density" type="range" min="0" max="100" step="1" value="55" />
-          <span id="branch-density-value">55</span>
-        </label>
-        <label id="thickness-control" class="slider">
-          Thickness
-          <input id="thickness" type="range" min="0" max="100" step="1" value="50" />
-          <span id="thickness-value">50</span>
-        </label>
-        <label id="branch-style-control" class="slider">
-          Branch Style
-          <select id="branch-style">
-            <option value="balanced" selected>Balanced</option>
-            <option value="stacked">Stacked</option>
-            <option value="cantilever">Cantilever</option>
-            <option value="crown">Crown</option>
-          </select>
-        </label>
-        <label id="branch-complexity-control" class="slider">
-          Complexity
-          <input id="branch-complexity" type="range" min="0" max="100" step="1" value="55" />
-          <span id="branch-complexity-value">55</span>
-        </label>
-        <label id="branch-variation-control" class="slider">
-          Scale Variation
-          <input id="branch-variation" type="range" min="0" max="100" step="1" value="45" />
-          <span id="branch-variation-value">45</span>
-        </label>
-        <label id="branch-projection-control" class="slider">
-          Detail Projection
-          <select id="branch-projection">
-            <option value="triplanar" selected>Tri-planar Wrap</option>
-            <option value="dominant">Dominant Axis</option>
-            <option value="planar">Planar (Top)</option>
-            <option value="cylindrical">Cylindrical Wrap</option>
+          Shape
+          <select id="shape-mode">
+            <option value="cube" selected>Cube</option>
+            <option value="rect">Rectangle</option>
           </select>
         </label>
         <label class="slider checkbox">
@@ -97,15 +58,47 @@
               <input id="carve-depth" type="range" min="0" max="4" step="0.1" value="1.5" />
               <span id="carve-depth-value">1.5</span>
             </label>
-            <label id="etch-size-control" class="slider hidden">
+            <label id="etch-size-control" class="slider">
               Cube Size (mm)
-              <input id="etch-size" type="range" min="120" max="250" step="5" value="200" />
+              <input id="etch-size" type="range" min="120" max="300" step="5" value="200" />
               <span id="etch-size-value">200</span>
+            </label>
+            <label id="rect-width-control" class="slider hidden">
+              Rect Width (mm)
+              <input id="rect-width" type="range" min="120" max="320" step="5" value="260" />
+              <span id="rect-width-value">260</span>
+            </label>
+            <label id="rect-height-control" class="slider hidden">
+              Rect Height (mm)
+              <input id="rect-height" type="range" min="80" max="280" step="5" value="180" />
+              <span id="rect-height-value">180</span>
+            </label>
+            <label id="rect-depth-control" class="slider hidden">
+              Rect Depth (mm)
+              <input id="rect-depth" type="range" min="120" max="320" step="5" value="220" />
+              <span id="rect-depth-value">220</span>
+            </label>
+            <label id="wall-thickness-control" class="slider">
+              Wall Thickness (mm)
+              <input id="wall-thickness" type="range" min="2" max="12" step="0.5" value="4" />
+              <span id="wall-thickness-value">4.0</span>
             </label>
             <label id="etch-gain-control" class="slider hidden">
               Depth Gain
               <input id="etch-gain" type="range" min="0.5" max="2.5" step="0.1" value="2.0" />
               <span id="etch-gain-value">2.0</span>
+            </label>
+            <label id="etch-style-control" class="slider">
+              Etch Style
+              <select id="etch-style">
+                <option value="relief" selected>Smooth Relief</option>
+                <option value="trench">Trench Cut</option>
+              </select>
+            </label>
+            <label id="trench-threshold-control" class="slider hidden">
+              Trench Threshold (%)
+              <input id="trench-threshold" type="range" min="0" max="100" step="1" value="50" />
+              <span id="trench-threshold-value">50</span>
             </label>
             <label id="etch-margin-control" class="slider hidden">
               Margin (mm)
@@ -121,8 +114,22 @@
               Wrap Mode
               <select id="etch-wrap">
                 <option value="face">Per Face</option>
-                <option value="sides" selected>Wrap Sides</option>
+                <option value="sides">Wrap Sides</option>
+                <option value="global" selected>Seamless Global</option>
               </select>
+            </label>
+            <label id="etch-fit-control" class="slider checkbox hidden">
+              <input id="etch-fit-face" type="checkbox" checked />
+              Stretch To Visible Face
+            </label>
+            <label id="texture-repeat-control" class="slider checkbox hidden">
+              <input id="texture-repeat" type="checkbox" checked />
+              Repeat Texture
+            </label>
+            <label id="texture-tiles-control" class="slider hidden">
+              Texture Tiles
+              <input id="texture-tiles" type="range" min="1" max="8" step="1" value="1" />
+              <span id="texture-tiles-value">1</span>
             </label>
             <label id="etch-faces-control" class="slider checkbox hidden">
               <input id="etch-all-faces" type="checkbox" checked />
@@ -136,6 +143,16 @@
                 <option value="180">180</option>
                 <option value="270">270</option>
               </select>
+            </label>
+            <label id="etch-offsetx-control" class="slider hidden">
+              Texture Offset X (%)
+              <input id="etch-offset-x" type="range" min="-50" max="50" step="1" value="0" />
+              <span id="etch-offset-x-value">0</span>
+            </label>
+            <label id="etch-offsety-control" class="slider hidden">
+              Texture Offset Y (%)
+              <input id="etch-offset-y" type="range" min="-50" max="50" step="1" value="0" />
+              <span id="etch-offset-y-value">0</span>
             </label>
             <label id="etch-flipx-control" class="slider checkbox hidden">
               <input id="etch-flip-x" type="checkbox" />
@@ -191,11 +208,11 @@
               <span id="carve-high-value">85</span>
             </label>
             <label class="slider checkbox">
-              <input id="detail-emboss" type="checkbox" />
+              <input id="detail-emboss" type="checkbox" checked />
               Emboss (Add Detail)
             </label>
             <label class="slider checkbox">
-              <input id="depth-invert" type="checkbox" />
+              <input id="depth-invert" type="checkbox" checked />
               Invert Depth
             </label>
             <label class="slider checkbox">
@@ -218,6 +235,14 @@
             <label class="slider checkbox">
               <input id="depth-preview" type="checkbox" />
               Preview Depth Map
+            </label>
+            <label class="slider">
+              Studio Preview
+              <select id="depth-studio-mode">
+                <option value="texture" selected>Texture</option>
+                <option value="heightmap">Heightmap</option>
+                <option value="trench">Trench Mask</option>
+              </select>
             </label>
           </div>
         </aside>

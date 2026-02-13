@@ -1,12 +1,5 @@
-﻿import * as THREE from "three";
+import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { createTileSet, defaultConfig, type Config, type Tile } from "@core/sketch";
-import { applyGravity, collapseToTiles, runWfc } from "@core/wfc3d";
-
-type Face = {
-  normal: [number, number, number];
-  vertices: [[number, number, number], [number, number, number], [number, number, number], [number, number, number]];
-};
 
 const ui = {
   canvas: document.getElementById("preview") as HTMLCanvasElement,
@@ -17,44 +10,58 @@ const ui = {
   export: document.getElementById("btn-export") as HTMLButtonElement,
   depthApply: document.getElementById("depth-apply") as HTMLButtonElement,
   textureInput: document.getElementById("texture-input") as HTMLInputElement,
-  modelMode: document.getElementById("model-mode") as HTMLSelectElement,
-  branchDensityControl: document.getElementById("branch-density-control") as HTMLElement,
-  thicknessControl: document.getElementById("thickness-control") as HTMLElement,
-  branchStyleControl: document.getElementById("branch-style-control") as HTMLElement,
-  branchComplexityControl: document.getElementById("branch-complexity-control") as HTMLElement,
-  branchVariationControl: document.getElementById("branch-variation-control") as HTMLElement,
-  branchProjectionControl: document.getElementById("branch-projection-control") as HTMLElement,
-  branchDensity: document.getElementById("branch-density") as HTMLInputElement,
-  branchDensityValue: document.getElementById("branch-density-value") as HTMLSpanElement,
-  thickness: document.getElementById("thickness") as HTMLInputElement,
-  thicknessValue: document.getElementById("thickness-value") as HTMLSpanElement,
-  branchStyle: document.getElementById("branch-style") as HTMLSelectElement,
-  branchComplexity: document.getElementById("branch-complexity") as HTMLInputElement,
-  branchComplexityValue: document.getElementById("branch-complexity-value") as HTMLSpanElement,
-  branchVariation: document.getElementById("branch-variation") as HTMLInputElement,
-  branchVariationValue: document.getElementById("branch-variation-value") as HTMLSpanElement,
-  branchProjection: document.getElementById("branch-projection") as HTMLSelectElement,
+  shapeMode: document.getElementById("shape-mode") as HTMLSelectElement,
   showTexture: document.getElementById("show-texture") as HTMLInputElement,
   etchSizeControl: document.getElementById("etch-size-control") as HTMLElement,
   etchGainControl: document.getElementById("etch-gain-control") as HTMLElement,
+  etchStyleControl: document.getElementById("etch-style-control") as HTMLElement,
+  trenchThresholdControl: document.getElementById("trench-threshold-control") as HTMLElement,
   etchMarginControl: document.getElementById("etch-margin-control") as HTMLElement,
   etchResolutionControl: document.getElementById("etch-resolution-control") as HTMLElement,
   etchFacesControl: document.getElementById("etch-faces-control") as HTMLElement,
   etchWrapControl: document.getElementById("etch-wrap-control") as HTMLElement,
+  etchFitControl: document.getElementById("etch-fit-control") as HTMLElement,
+  textureRepeatControl: document.getElementById("texture-repeat-control") as HTMLElement,
+  textureTilesControl: document.getElementById("texture-tiles-control") as HTMLElement,
   etchRotateControl: document.getElementById("etch-rotate-control") as HTMLElement,
+  etchOffsetXControl: document.getElementById("etch-offsetx-control") as HTMLElement,
+  etchOffsetYControl: document.getElementById("etch-offsety-control") as HTMLElement,
   etchFlipXControl: document.getElementById("etch-flipx-control") as HTMLElement,
   etchFlipYControl: document.getElementById("etch-flipy-control") as HTMLElement,
   etchSize: document.getElementById("etch-size") as HTMLInputElement,
   etchSizeValue: document.getElementById("etch-size-value") as HTMLSpanElement,
+  rectWidthControl: document.getElementById("rect-width-control") as HTMLElement,
+  rectWidth: document.getElementById("rect-width") as HTMLInputElement,
+  rectWidthValue: document.getElementById("rect-width-value") as HTMLSpanElement,
+  rectHeightControl: document.getElementById("rect-height-control") as HTMLElement,
+  rectHeight: document.getElementById("rect-height") as HTMLInputElement,
+  rectHeightValue: document.getElementById("rect-height-value") as HTMLSpanElement,
+  rectDepthControl: document.getElementById("rect-depth-control") as HTMLElement,
+  rectDepth: document.getElementById("rect-depth") as HTMLInputElement,
+  rectDepthValue: document.getElementById("rect-depth-value") as HTMLSpanElement,
+  wallThicknessControl: document.getElementById("wall-thickness-control") as HTMLElement,
+  wallThickness: document.getElementById("wall-thickness") as HTMLInputElement,
+  wallThicknessValue: document.getElementById("wall-thickness-value") as HTMLSpanElement,
   etchGain: document.getElementById("etch-gain") as HTMLInputElement,
   etchGainValue: document.getElementById("etch-gain-value") as HTMLSpanElement,
+  etchStyle: document.getElementById("etch-style") as HTMLSelectElement,
+  trenchThreshold: document.getElementById("trench-threshold") as HTMLInputElement,
+  trenchThresholdValue: document.getElementById("trench-threshold-value") as HTMLSpanElement,
   etchMargin: document.getElementById("etch-margin") as HTMLInputElement,
   etchMarginValue: document.getElementById("etch-margin-value") as HTMLSpanElement,
   etchResolution: document.getElementById("etch-resolution") as HTMLInputElement,
   etchResolutionValue: document.getElementById("etch-resolution-value") as HTMLSpanElement,
   etchAllFaces: document.getElementById("etch-all-faces") as HTMLInputElement,
   etchWrap: document.getElementById("etch-wrap") as HTMLSelectElement,
+  etchFitFace: document.getElementById("etch-fit-face") as HTMLInputElement,
+  textureRepeat: document.getElementById("texture-repeat") as HTMLInputElement,
+  textureTiles: document.getElementById("texture-tiles") as HTMLInputElement,
+  textureTilesValue: document.getElementById("texture-tiles-value") as HTMLSpanElement,
   etchRotation: document.getElementById("etch-rotation") as HTMLSelectElement,
+  etchOffsetX: document.getElementById("etch-offset-x") as HTMLInputElement,
+  etchOffsetXValue: document.getElementById("etch-offset-x-value") as HTMLSpanElement,
+  etchOffsetY: document.getElementById("etch-offset-y") as HTMLInputElement,
+  etchOffsetYValue: document.getElementById("etch-offset-y-value") as HTMLSpanElement,
   etchFlipX: document.getElementById("etch-flip-x") as HTMLInputElement,
   etchFlipY: document.getElementById("etch-flip-y") as HTMLInputElement,
   carveDepth: document.getElementById("carve-depth") as HTMLInputElement,
@@ -85,23 +92,15 @@ const ui = {
   depthLightAngleValue: document.getElementById("depth-light-angle-value") as HTMLSpanElement,
   depthLive: document.getElementById("depth-live") as HTMLInputElement,
   depthPreview: document.getElementById("depth-preview") as HTMLInputElement,
+  depthStudioMode: document.getElementById("depth-studio-mode") as HTMLSelectElement,
 };
 
-const tiles = createTileSet();
-const airTile = tiles.find((tile) => tile.name === "air") ?? tiles[0];
-const solidTile = tiles.find((tile) => tile.name === "solid") ?? tiles.find((tile) => tile.solid) ?? tiles[0];
-let currentTiles: Tile[] = [];
-let currentConfig: Config = { ...defaultConfig };
-let currentFaces: Face[] = [];
 let currentGeometry: THREE.BufferGeometry | null = null;
 const buttonLabels = new Map<HTMLButtonElement, string>();
-let baseGrid: Uint8Array | null = null;
 let isGenerating = false;
 let userHasMovedCamera = false;
 let suppressCameraEvents = false;
 let lastCameraState: { position: THREE.Vector3; target: THREE.Vector3 } | null = null;
-let modelScale = 1;
-const targetSizeMM = 250;
 
 type HeightMap = {
   width: number;
@@ -109,12 +108,22 @@ type HeightMap = {
   values: Float32Array;
 };
 
+type ColorMap = {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+};
+
 let activeHeightMapRaw: HeightMap | null = null;
 let activeHeightMapProcessed: HeightMap | null = null;
 let activeHeightMapSmoothed: HeightMap | null = null;
+let activeTextureColorMap: ColorMap | null = null;
 let activeTexture: THREE.Texture | null = null;
 let activeDepthPreviewTexture: THREE.Texture | null = null;
 let activeDepthStudioTexture: THREE.Texture | null = null;
+let rectKitbash: BranchBlock[] | null = null;
+let forceBranchRandomize = false;
+const DEPTH_STUDIO_2D_PREVIEW = true;
 
 const renderer = new THREE.WebGLRenderer({ canvas: ui.canvas, antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -152,17 +161,30 @@ const group = new THREE.Group();
 scene.add(group);
 
 const depthScene = new THREE.Scene();
-const depthCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 200);
-depthCamera.position.set(9, 7.2, 9);
-depthCamera.lookAt(0, 0, 0);
+const depthCamera = DEPTH_STUDIO_2D_PREVIEW
+  ? new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10)
+  : new THREE.PerspectiveCamera(35, 1, 0.1, 200);
+if (DEPTH_STUDIO_2D_PREVIEW) {
+  depthCamera.position.set(0, 0, 2);
+  depthCamera.lookAt(0, 0, 0);
+} else {
+  depthCamera.position.set(9, 7.2, 9);
+  depthCamera.lookAt(0, 0, 0);
+}
 const depthLightA = new THREE.DirectionalLight(0xffffff, 0.9);
 depthLightA.position.set(8, 10, 6);
 const depthLightB = new THREE.DirectionalLight(0xffffff, 0.35);
 depthLightB.position.set(-6, 4, -4);
 const depthAmbient = new THREE.AmbientLight(0xffffff, 0.25);
+if (DEPTH_STUDIO_2D_PREVIEW) {
+  depthLightA.intensity = 0;
+  depthLightB.intensity = 0;
+  depthAmbient.intensity = 1;
+}
 depthScene.add(depthLightA, depthLightB, depthAmbient);
 
 const updateDepthPreviewLighting = () => {
+  if (DEPTH_STUDIO_2D_PREVIEW) return;
   const angle = THREE.MathUtils.degToRad(Number(ui.depthLightAngle.value));
   const raking = ui.depthRaking.checked;
   const radius = 12;
@@ -186,9 +208,19 @@ const depthMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.0,
   side: THREE.DoubleSide,
 });
-const depthPlane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10, 128, 128), depthMaterial);
-depthPlane.rotation.x = -Math.PI / 5.5;
-depthPlane.position.y = -0.5;
+const depthPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(
+    DEPTH_STUDIO_2D_PREVIEW ? 2 : 10,
+    DEPTH_STUDIO_2D_PREVIEW ? 2 : 10,
+    DEPTH_STUDIO_2D_PREVIEW ? 1 : 128,
+    DEPTH_STUDIO_2D_PREVIEW ? 1 : 128
+  ),
+  depthMaterial
+);
+if (!DEPTH_STUDIO_2D_PREVIEW) {
+  depthPlane.rotation.x = -Math.PI / 5.5;
+  depthPlane.position.y = -0.5;
+}
 depthScene.add(depthPlane);
 
 const resize = () => {
@@ -201,7 +233,22 @@ const resize = () => {
   const depthHeight = ui.depthCanvas.clientHeight;
   if (depthWidth > 0 && depthHeight > 0) {
     depthRenderer.setSize(depthWidth, depthHeight, false);
-    depthCamera.aspect = depthWidth / depthHeight;
+    if (depthCamera instanceof THREE.PerspectiveCamera) {
+      depthCamera.aspect = depthWidth / depthHeight;
+    } else {
+      const aspect = depthWidth / depthHeight;
+      if (aspect >= 1) {
+        depthCamera.left = -aspect;
+        depthCamera.right = aspect;
+        depthCamera.top = 1;
+        depthCamera.bottom = -1;
+      } else {
+        depthCamera.left = -1;
+        depthCamera.right = 1;
+        depthCamera.top = 1 / aspect;
+        depthCamera.bottom = -1 / aspect;
+      }
+    }
     depthCamera.updateProjectionMatrix();
   }
 };
@@ -213,55 +260,169 @@ const setStatus = (message: string) => {
 };
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const wrap01 = (value: number) => {
+  const wrapped = value - Math.floor(value);
+  return wrapped < 0 ? wrapped + 1 : wrapped;
+};
 
 type DetailMode = "carve" | "emboss";
-type ModelMode = "branching" | "etch" | "wfc";
-type BranchStyle = "balanced" | "stacked" | "cantilever" | "crown";
-type BranchProjection = "triplanar" | "dominant" | "planar" | "cylindrical";
+type ShapeMode = "cube" | "rect";
+type EtchStyle = "relief" | "trench";
+type WrapMode = "face" | "sides" | "global";
+type BranchBlock = {
+  centerX: number;
+  centerY: number;
+  centerZ: number;
+  widthMm: number;
+  heightMm: number;
+  depthMm: number;
+};
 
 const getDetailMode = (): DetailMode => (ui.detailEmboss.checked ? "emboss" : "carve");
-const getModelMode = (): ModelMode => {
-  if (ui.modelMode.value === "etch") return "etch";
-  if (ui.modelMode.value === "wfc") return "wfc";
-  return "branching";
-};
+const getShapeMode = (): ShapeMode => (ui.shapeMode.value === "rect" ? "rect" : "cube");
 
 const getEtchSettings = () => ({
   cubeSizeMm: Number(ui.etchSize.value),
   marginMm: Number(ui.etchMargin.value),
   resolution: Number(ui.etchResolution.value),
   depthGain: Number(ui.etchGain.value),
+  etchStyle: (ui.etchStyle.value === "trench" ? "trench" : "relief") as EtchStyle,
+  trenchThreshold: Number(ui.trenchThreshold.value) / 100,
   allFaces: ui.etchAllFaces.checked,
-  wrapMode: ui.etchWrap.value === "sides" ? "sides" : "face",
+  wrapMode: (
+    ui.etchWrap.value === "global"
+      ? "global"
+      : ui.etchWrap.value === "sides"
+        ? "sides"
+        : "face"
+  ) as WrapMode,
+  fitToVisibleFace: ui.etchFitFace.checked,
+  textureRepeat: ui.textureRepeat.checked,
+  textureTiles: Number(ui.textureTiles.value),
   rotation: Number(ui.etchRotation.value),
+  offsetX: Number(ui.etchOffsetX.value) / 100,
+  offsetY: Number(ui.etchOffsetY.value) / 100,
   flipX: ui.etchFlipX.checked,
   flipY: ui.etchFlipY.checked,
 });
 
-const getBranchProjection = (): BranchProjection => {
-  const value = ui.branchProjection.value as BranchProjection;
-  return value || "triplanar";
+const getShellSettings = () => ({
+  wallThicknessMm: Number(ui.wallThickness.value),
+});
+
+const getShapeDimensions = () => {
+  const shape = getShapeMode();
+  if (shape === "rect") {
+    return {
+      shape,
+      widthMm: Number(ui.rectWidth.value),
+      heightMm: Number(ui.rectHeight.value),
+      depthMm: Number(ui.rectDepth.value),
+    };
+  }
+  const cubeSizeMm = Number(ui.etchSize.value);
+  return {
+    shape,
+    widthMm: cubeSizeMm,
+    heightMm: cubeSizeMm,
+    depthMm: cubeSizeMm,
+  };
+};
+
+const randBetween = (min: number, max: number) => {
+  if (min >= max) return min;
+  return min + Math.random() * (max - min);
+};
+
+const makeRectKitbash = (wallThicknessMm: number): BranchBlock[] => {
+  const { widthMm, heightMm, depthMm } = getShapeDimensions();
+  const base: BranchBlock = { centerX: 0, centerY: 0, centerZ: 0, widthMm, heightMm, depthMm };
+  const blocks: BranchBlock[] = [];
+  const blockCount = 3 + Math.floor(Math.random() * 6);
+
+  const pickFaceSize = (baseSize: number) => {
+    const raw = baseSize * randBetween(0.3, 0.85);
+    return Math.max(16, Math.min(baseSize * 0.9, raw));
+  };
+  const pickDepth = (baseSize: number) => {
+    const raw = baseSize * randBetween(0.2, 0.65);
+    return Math.max(16, Math.min(baseSize * 0.85, raw));
+  };
+  const pickOverlap = (depth: number) => {
+    const minOverlap = Math.max(4, wallThicknessMm * 1.2);
+    const overlap = Math.max(minOverlap, depth * 0.25);
+    return Math.min(overlap, depth * 0.5);
+  };
+
+  const addAttachment = (target: BranchBlock): BranchBlock => {
+    const halfX = target.widthMm * 0.5;
+    const halfY = target.heightMm * 0.5;
+    const halfZ = target.depthMm * 0.5;
+    const face = Math.floor(Math.random() * 6);
+
+    if (face === 0 || face === 1) {
+      const w = pickFaceSize(target.widthMm);
+      const h = pickFaceSize(target.heightMm);
+      const d = pickDepth(target.depthMm);
+      const overlap = pickOverlap(d);
+      const cx = randBetween(-halfX + w * 0.5, halfX - w * 0.5);
+      const cy = randBetween(-halfY + h * 0.5, halfY - h * 0.5);
+      const cz = target.centerZ + (face === 0 ? 1 : -1) * (halfZ + d * 0.5 - overlap);
+      return { centerX: target.centerX + cx, centerY: target.centerY + cy, centerZ: cz, widthMm: w, heightMm: h, depthMm: d };
+    }
+
+    if (face === 2 || face === 3) {
+      const w = pickDepth(target.widthMm);
+      const h = pickFaceSize(target.heightMm);
+      const d = pickFaceSize(target.depthMm);
+      const overlap = pickOverlap(w);
+      const cz = randBetween(-halfZ + d * 0.5, halfZ - d * 0.5);
+      const cy = randBetween(-halfY + h * 0.5, halfY - h * 0.5);
+      const cx = target.centerX + (face === 2 ? 1 : -1) * (halfX + w * 0.5 - overlap);
+      return { centerX: cx, centerY: target.centerY + cy, centerZ: target.centerZ + cz, widthMm: w, heightMm: h, depthMm: d };
+    }
+
+    const w = pickFaceSize(target.widthMm);
+    const h = pickDepth(target.heightMm);
+    const d = pickFaceSize(target.depthMm);
+    const overlap = pickOverlap(h);
+    const cx = randBetween(-halfX + w * 0.5, halfX - w * 0.5);
+    const cz = randBetween(-halfZ + d * 0.5, halfZ - d * 0.5);
+    const cy = target.centerY + (face === 4 ? 1 : -1) * (halfY + h * 0.5 - overlap);
+    return { centerX: target.centerX + cx, centerY: cy, centerZ: target.centerZ + cz, widthMm: w, heightMm: h, depthMm: d };
+  };
+
+  for (let i = 0; i < blockCount; i += 1) {
+    const anchor = blocks.length > 0 && Math.random() < 0.35 ? blocks[Math.floor(Math.random() * blocks.length)] : base;
+    blocks.push(addAttachment(anchor));
+  }
+
+  return blocks;
 };
 
 const updateModeUI = () => {
-  const mode = getModelMode();
-  const etchMode = mode === "etch";
-  const branchingMode = mode === "branching";
-  ui.branchDensityControl.classList.toggle("hidden", !branchingMode);
-  ui.thicknessControl.classList.toggle("hidden", !branchingMode);
-  ui.branchStyleControl.classList.toggle("hidden", !branchingMode);
-  ui.branchComplexityControl.classList.toggle("hidden", !branchingMode);
-  ui.branchVariationControl.classList.toggle("hidden", !branchingMode);
-  ui.branchProjectionControl.classList.toggle("hidden", etchMode);
-  ui.etchSizeControl.classList.toggle("hidden", !etchMode);
-  ui.etchGainControl.classList.toggle("hidden", !etchMode);
-  ui.etchMarginControl.classList.toggle("hidden", !etchMode);
-  ui.etchResolutionControl.classList.toggle("hidden", !etchMode);
-  ui.etchWrapControl.classList.toggle("hidden", !etchMode);
-  ui.etchFacesControl.classList.toggle("hidden", !etchMode);
-  ui.etchRotateControl.classList.toggle("hidden", !etchMode);
-  ui.etchFlipXControl.classList.toggle("hidden", !etchMode);
-  ui.etchFlipYControl.classList.toggle("hidden", !etchMode);
+  const shape = getShapeMode();
+  const cubeMode = shape === "cube";
+  const faceWrapMode = ui.etchWrap.value === "face";
+  ui.etchSizeControl.classList.toggle("hidden", !cubeMode);
+  ui.rectWidthControl.classList.toggle("hidden", cubeMode);
+  ui.rectHeightControl.classList.toggle("hidden", cubeMode);
+  ui.rectDepthControl.classList.toggle("hidden", cubeMode);
+  ui.etchGainControl.classList.toggle("hidden", false);
+  ui.etchStyleControl.classList.toggle("hidden", false);
+  ui.trenchThresholdControl.classList.toggle("hidden", ui.etchStyle.value !== "trench");
+  ui.etchMarginControl.classList.toggle("hidden", false);
+  ui.etchResolutionControl.classList.toggle("hidden", false);
+  ui.etchWrapControl.classList.toggle("hidden", false);
+  ui.etchFitControl.classList.toggle("hidden", !faceWrapMode);
+  ui.textureRepeatControl.classList.toggle("hidden", false);
+  ui.textureTilesControl.classList.toggle("hidden", !ui.textureRepeat.checked);
+  ui.etchFacesControl.classList.toggle("hidden", false);
+  ui.etchRotateControl.classList.toggle("hidden", false);
+  ui.etchOffsetXControl.classList.toggle("hidden", false);
+  ui.etchOffsetYControl.classList.toggle("hidden", false);
+  ui.etchFlipXControl.classList.toggle("hidden", false);
+  ui.etchFlipYControl.classList.toggle("hidden", false);
 };
 
 const getCarveSettings = () => {
@@ -284,14 +445,18 @@ const getCarveSettings = () => {
 };
 
 const updateControlLabels = () => {
-  ui.branchDensityValue.textContent = ui.branchDensity.value;
-  ui.thicknessValue.textContent = ui.thickness.value;
-  ui.branchComplexityValue.textContent = ui.branchComplexity.value;
-  ui.branchVariationValue.textContent = ui.branchVariation.value;
   ui.etchSizeValue.textContent = ui.etchSize.value;
+  ui.rectWidthValue.textContent = ui.rectWidth.value;
+  ui.rectHeightValue.textContent = ui.rectHeight.value;
+  ui.rectDepthValue.textContent = ui.rectDepth.value;
+  ui.wallThicknessValue.textContent = Number(ui.wallThickness.value).toFixed(1);
   ui.etchGainValue.textContent = Number(ui.etchGain.value).toFixed(1);
+  ui.trenchThresholdValue.textContent = ui.trenchThreshold.value;
   ui.etchMarginValue.textContent = Number(ui.etchMargin.value).toFixed(1);
   ui.etchResolutionValue.textContent = ui.etchResolution.value;
+  ui.textureTilesValue.textContent = ui.textureTiles.value;
+  ui.etchOffsetXValue.textContent = ui.etchOffsetX.value;
+  ui.etchOffsetYValue.textContent = ui.etchOffsetY.value;
   ui.carveDepthValue.textContent = Number(ui.carveDepth.value).toFixed(1);
   ui.carveLowValue.textContent = ui.carveLow.value;
   ui.carveHighValue.textContent = ui.carveHigh.value;
@@ -329,7 +494,26 @@ const extractHeightMap = (image: HTMLImageElement): HeightMap => {
   return { width, height, values };
 };
 
-const sampleHeightMap = (map: HeightMap, u: number, v: number) => {
+const extractColorMap = (image: HTMLImageElement): ColorMap => {
+  const maxDim = 1024;
+  const scale = Math.min(1, maxDim / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return { width: 1, height: 1, data: new Uint8ClampedArray([255, 255, 255, 255]) };
+  ctx.drawImage(image, 0, 0, width, height);
+  const { data } = ctx.getImageData(0, 0, width, height);
+  return { width, height, data };
+};
+
+const USE_LEGACY_SAMPLING = false;
+let warnedGlobalUvOutOfRange = false;
+
+const sampleHeightMapBilinear = (map: HeightMap, u: number, v: number) => {
   const uu = clamp01(u);
   const vv = clamp01(v);
   const x = uu * (map.width - 1);
@@ -350,6 +534,46 @@ const sampleHeightMap = (map: HeightMap, u: number, v: number) => {
   const b = p01 * (1 - tx) + p11 * tx;
   return a * (1 - ty) + b * ty;
 };
+
+const sampleHeightMapNearest = (map: HeightMap, u: number, v: number) => {
+  const uu = clamp01(u);
+  const vv = clamp01(v);
+  const x = Math.round(uu * (map.width - 1));
+  const y = Math.round(vv * (map.height - 1));
+  return map.values[x + y * map.width];
+};
+
+const sampleColorMapBilinear = (map: ColorMap, u: number, v: number) => {
+  const uu = clamp01(u);
+  const vv = clamp01(v);
+  const x = uu * (map.width - 1);
+  const y = vv * (map.height - 1);
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const x1 = Math.min(map.width - 1, x0 + 1);
+  const y1 = Math.min(map.height - 1, y0 + 1);
+  const tx = x - x0;
+  const ty = y - y0;
+
+  const idx00 = (x0 + y0 * map.width) * 4;
+  const idx10 = (x1 + y0 * map.width) * 4;
+  const idx01 = (x0 + y1 * map.width) * 4;
+  const idx11 = (x1 + y1 * map.width) * 4;
+
+  const out: [number, number, number, number] = [0, 0, 0, 0];
+  for (let c = 0; c < 4; c += 1) {
+    const a = map.data[idx00 + c] * (1 - tx) + map.data[idx10 + c] * tx;
+    const b = map.data[idx01 + c] * (1 - tx) + map.data[idx11 + c] * tx;
+    out[c] = a * (1 - ty) + b * ty;
+  }
+  return out;
+};
+
+const sampleDetailHeight = (map: HeightMap, u: number, v: number) =>
+  USE_LEGACY_SAMPLING ? sampleHeightMapNearest(map, u, v) : sampleHeightMapBilinear(map, u, v);
+
+const shouldUseRepeatWrapping = (textureRepeat: boolean, textureTiles: number, wrapMode: WrapMode) =>
+  wrapMode === "global" ? textureRepeat && textureTiles > 1 : textureRepeat;
 
 const blurValues = (values: Float32Array, width: number, height: number, radius: number) => {
   if (radius <= 0) return values;
@@ -416,7 +640,19 @@ const applyPosterize = (value: number, levels: number) => {
   return Math.round(value * maxLevel) / maxLevel;
 };
 
-const transformUv = (u: number, v: number, rotation: number, flipX: boolean, flipY: boolean) => {
+type UvTransformMode = "repeat" | "clamp" | "continuous";
+
+const transformUv = (
+  u: number,
+  v: number,
+  rotation: number,
+  flipX: boolean,
+  flipY: boolean,
+  textureTiles: number,
+  offsetX: number,
+  offsetY: number,
+  mode: UvTransformMode = "repeat"
+) => {
   let uu = u;
   let vv = v;
   const rot = ((rotation % 360) + 360) % 360;
@@ -430,22 +666,113 @@ const transformUv = (u: number, v: number, rotation: number, flipX: boolean, fli
   }
   if (flipX) uu = 1 - uu;
   if (flipY) vv = 1 - vv;
+  const tiles = Math.max(1, textureTiles);
+  uu *= tiles;
+  vv *= tiles;
+  uu += offsetX;
+  vv += offsetY;
+  if (mode === "repeat") {
+    uu = wrap01(uu);
+    vv = wrap01(vv);
+  } else if (mode === "clamp") {
+    uu = clamp01(uu);
+    vv = clamp01(vv);
+  }
   return [uu, vv];
 };
 
-const sampleHeightMapTransformed = (map: HeightMap, u: number, v: number, rotation: number, flipX: boolean, flipY: boolean) => {
-  const [uu, vv] = transformUv(u, v, rotation, flipX, flipY);
-  return sampleHeightMap(map, uu, vv);
+const sampleHeightMapTransformed = (
+  map: HeightMap,
+  u: number,
+  v: number,
+  rotation: number,
+  flipX: boolean,
+  flipY: boolean,
+  textureRepeat: boolean,
+  textureTiles: number,
+  offsetX: number,
+  offsetY: number,
+  wrapMode: WrapMode
+) => {
+  const mode: UvTransformMode = shouldUseRepeatWrapping(textureRepeat, textureTiles, wrapMode) ? "repeat" : "clamp";
+  const [uu, vv] = transformUv(u, v, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+  return sampleDetailHeight(map, uu, vv);
 };
 
-const sampleWrappedUv = (pos: THREE.Vector3, cubeSize: number, rotation: number, flipX: boolean, flipY: boolean) => {
-  const half = cubeSize * 0.5;
+const sampleColorMapTransformed = (
+  map: ColorMap,
+  u: number,
+  v: number,
+  rotation: number,
+  flipX: boolean,
+  flipY: boolean,
+  textureRepeat: boolean,
+  textureTiles: number,
+  offsetX: number,
+  offsetY: number,
+  wrapMode: WrapMode
+) => {
+  const mode: UvTransformMode = shouldUseRepeatWrapping(textureRepeat, textureTiles, wrapMode) ? "repeat" : "clamp";
+  const [uu, vv] = transformUv(u, v, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+  return sampleColorMapBilinear(map, uu, vv);
+};
+
+const sampleWrappedUv = (
+  pos: THREE.Vector3,
+  widthMm: number,
+  heightMm: number,
+  depthMm: number,
+  rotation: number,
+  flipX: boolean,
+  flipY: boolean,
+  textureTiles: number,
+  offsetX: number,
+  offsetY: number,
+  mode: UvTransformMode = "repeat"
+) => {
+  const halfY = heightMm * 0.5;
   const angle = Math.atan2(pos.z, pos.x);
   let u = angle / (Math.PI * 2) + 0.5;
-  let v = (pos.y + half) / cubeSize;
+  let v = (pos.y + halfY) / Math.max(1e-6, heightMm);
   u = clamp01(u);
   v = clamp01(v);
-  return transformUv(u, v, rotation, flipX, flipY);
+  return transformUv(u, v, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+};
+
+const clampUvEdge = (value: number) => Math.min(0.999999, Math.max(0.000001, value));
+
+const computeGlobalUv = (worldPos: THREE.Vector3, normal: THREE.Vector3, bounds: THREE.Box3) => {
+  const spanX = Math.max(1e-6, bounds.max.x - bounds.min.x);
+  const spanY = Math.max(1e-6, bounds.max.y - bounds.min.y);
+  const spanZ = Math.max(1e-6, bounds.max.z - bounds.min.z);
+
+  const u = (worldPos.x - bounds.min.x) / spanX;
+  const v = (worldPos.y - bounds.min.y) / spanY;
+  const w = (worldPos.z - bounds.min.z) / spanZ;
+
+  const ax = Math.abs(normal.x);
+  const ay = Math.abs(normal.y);
+  const az = Math.abs(normal.z);
+
+  let uvU = u;
+  let uvV = v;
+  if (ay >= ax && ay >= az) {
+    uvU = u;
+    uvV = w;
+  } else if (ax >= ay && ax >= az) {
+    uvU = w;
+    uvV = v;
+  } else {
+    uvU = u;
+    uvV = v;
+  }
+
+  if (!warnedGlobalUvOutOfRange && (uvU < -1e-4 || uvU > 1.0001 || uvV < -1e-4 || uvV > 1.0001)) {
+    warnedGlobalUvOutOfRange = true;
+    console.warn("Global UV out of [0,1] before wrapping; clamping to safe range.");
+  }
+
+  return [clampUvEdge(clamp01(uvU)), clampUvEdge(clamp01(uvV))] as [number, number];
 };
 
 const applyHighPassDetail = (values: Float32Array, width: number, height: number, amount: number) => {
@@ -537,7 +864,7 @@ const buildProcessedHeightMap = () => {
   activeHeightMapProcessed = { width, height, values: blurred };
 
   if (ui.depthSmooth.checked) {
-    const etchMode = getModelMode() === "etch";
+    const etchMode = true;
     const posterized = Number(ui.depthPosterize.value) > 0;
     // Keep hard edges for etching workflows while still reducing noise.
     const smoothed = etchMode && posterized ? edgePreserveSmooth(blurred, width, height, 1, 0.045) : edgePreserveSmooth(blurred, width, height, 2, 0.09);
@@ -552,8 +879,159 @@ const getActiveDetailMap = () => {
   return activeHeightMapProcessed;
 };
 
+const getTextureWrapMode = (repeat: boolean, textureTiles: number, wrapMode: WrapMode) =>
+  shouldUseRepeatWrapping(repeat, textureTiles, wrapMode) ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping;
+const syncTextureWrapModes = () => {
+  const { textureRepeat, textureTiles, wrapMode } = getEtchSettings();
+  const textureWrapMode = getTextureWrapMode(textureRepeat, textureTiles, wrapMode);
+  const applyWrap = (texture: THREE.Texture | null) => {
+    if (!texture) return;
+    texture.wrapS = textureWrapMode;
+    texture.wrapT = textureWrapMode;
+    texture.needsUpdate = true;
+  };
+  applyWrap(activeTexture);
+  applyWrap(activeDepthStudioTexture);
+  applyWrap(activeDepthPreviewTexture);
+};
+
 const updateDepthStudioPreview = () => {
   const previewMap = getActiveDetailMap();
+  const {
+    rotation,
+    flipX,
+    flipY,
+    textureRepeat,
+    textureTiles,
+    offsetX,
+    offsetY,
+    etchStyle,
+    trenchThreshold,
+    wrapMode,
+  } = getEtchSettings();
+
+  const previewMode = (
+    ui.depthStudioMode.value === "heightmap"
+      ? "heightmap"
+      : ui.depthStudioMode.value === "trench"
+        ? "trench"
+        : "texture"
+  ) as "texture" | "heightmap" | "trench";
+
+  const renderFlatPreview = () => {
+    const textureSource = activeTextureColorMap;
+    const mapSource = previewMap;
+    if (!textureSource && !mapSource) {
+      if (activeDepthStudioTexture) {
+        activeDepthStudioTexture.dispose();
+        activeDepthStudioTexture = null;
+      }
+      depthMaterial.displacementMap = null;
+      depthMaterial.displacementScale = 0;
+      depthMaterial.displacementBias = 0;
+      depthMaterial.map = activeTexture;
+      depthMaterial.needsUpdate = true;
+      return;
+    }
+
+    let width = 512;
+    let height = 512;
+    if (previewMode === "texture" && textureSource) {
+      width = textureSource.width;
+      height = textureSource.height;
+    } else if (mapSource) {
+      width = mapSource.width;
+      height = mapSource.height;
+    } else if (textureSource) {
+      width = textureSource.width;
+      height = textureSource.height;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("2D context unavailable for Depth Studio preview.");
+    const img = ctx.createImageData(width, height);
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const u = width > 1 ? x / (width - 1) : 0.5;
+        const v = height > 1 ? y / (height - 1) : 0.5;
+        const p = (x + y * width) * 4;
+
+        if (previewMode === "texture" && textureSource) {
+          const [r, g, b, a] = sampleColorMapTransformed(
+            textureSource,
+            u,
+            v,
+            rotation,
+            flipX,
+            flipY,
+            textureRepeat,
+            textureTiles,
+            offsetX,
+            offsetY,
+            wrapMode
+          );
+          img.data[p] = Math.round(r);
+          img.data[p + 1] = Math.round(g);
+          img.data[p + 2] = Math.round(b);
+          img.data[p + 3] = Math.round(a);
+          continue;
+        }
+
+        let tone = mapSource
+          ? sampleHeightMapTransformed(
+              mapSource,
+              u,
+              v,
+              rotation,
+              flipX,
+              flipY,
+              textureRepeat,
+              textureTiles,
+              offsetX,
+              offsetY,
+              wrapMode
+            )
+          : 0.5;
+        if (previewMode === "trench") {
+          tone = tone >= trenchThreshold ? 1 : 0;
+        }
+        const vv = Math.round(tone * 255);
+        img.data[p] = vv;
+        img.data[p + 1] = vv;
+        img.data[p + 2] = vv;
+        img.data[p + 3] = 255;
+      }
+    }
+
+    ctx.putImageData(img, 0, 0);
+    if (activeDepthStudioTexture) activeDepthStudioTexture.dispose();
+    const tex = new THREE.CanvasTexture(canvas);
+    const textureWrapMode = getTextureWrapMode(textureRepeat, textureTiles, wrapMode);
+    tex.wrapS = textureWrapMode;
+    tex.wrapT = textureWrapMode;
+    tex.needsUpdate = true;
+    activeDepthStudioTexture = tex;
+
+    depthMaterial.displacementMap = null;
+    depthMaterial.displacementScale = 0;
+    depthMaterial.displacementBias = 0;
+    depthMaterial.map = activeDepthStudioTexture;
+    depthMaterial.needsUpdate = true;
+  };
+
+  if (DEPTH_STUDIO_2D_PREVIEW) {
+    try {
+      renderFlatPreview();
+      return;
+    } catch (error) {
+      console.warn("Depth Studio 2D preview failed; falling back to legacy studio preview.", error);
+    }
+  }
+
   if (!previewMap) {
     if (activeDepthStudioTexture) {
       activeDepthStudioTexture.dispose();
@@ -566,7 +1044,6 @@ const updateDepthStudioPreview = () => {
   }
 
   const { width, height } = previewMap;
-  const { rotation, flipX, flipY } = getEtchSettings();
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -577,7 +1054,8 @@ const updateDepthStudioPreview = () => {
     for (let x = 0; x < width; x += 1) {
       const u = width > 1 ? x / (width - 1) : 0.5;
       const v = height > 1 ? y / (height - 1) : 0.5;
-      const tone = sampleHeightMapTransformed(previewMap, u, v, rotation, flipX, flipY);
+      let tone = sampleHeightMapTransformed(previewMap, u, v, rotation, flipX, flipY, textureRepeat, textureTiles, offsetX, offsetY, wrapMode);
+      if (etchStyle === "trench") tone = tone >= trenchThreshold ? 1 : 0;
       const vv = Math.round(tone * 255);
       const p = (x + y * width) * 4;
       img.data[p] = vv;
@@ -590,8 +1068,9 @@ const updateDepthStudioPreview = () => {
 
   if (activeDepthStudioTexture) activeDepthStudioTexture.dispose();
   const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
+  const textureWrapMode = getTextureWrapMode(textureRepeat, textureTiles, wrapMode);
+  tex.wrapS = textureWrapMode;
+  tex.wrapT = textureWrapMode;
   tex.needsUpdate = true;
   activeDepthStudioTexture = tex;
 
@@ -624,7 +1103,7 @@ const buildDepthPreviewTexture = () => {
   }
   const width = previewMap.width;
   const height = previewMap.height;
-  const { rotation, flipX, flipY } = getEtchSettings();
+  const { rotation, flipX, flipY, textureRepeat, textureTiles, offsetX, offsetY, etchStyle, trenchThreshold, wrapMode } = getEtchSettings();
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -635,7 +1114,8 @@ const buildDepthPreviewTexture = () => {
     for (let x = 0; x < width; x += 1) {
       const u = width > 1 ? x / (width - 1) : 0.5;
       const v = height > 1 ? y / (height - 1) : 0.5;
-      const tone = sampleHeightMapTransformed(previewMap, u, v, rotation, flipX, flipY);
+      let tone = sampleHeightMapTransformed(previewMap, u, v, rotation, flipX, flipY, textureRepeat, textureTiles, offsetX, offsetY, wrapMode);
+      if (etchStyle === "trench") tone = tone >= trenchThreshold ? 1 : 0;
       const vv = Math.round(tone * 255);
       const p = (x + y * width) * 4;
       img.data[p] = vv;
@@ -647,8 +1127,9 @@ const buildDepthPreviewTexture = () => {
   ctx.putImageData(img, 0, 0);
   if (activeDepthPreviewTexture) activeDepthPreviewTexture.dispose();
   const tex = new THREE.CanvasTexture(canvas);
-  tex.wrapS = THREE.ClampToEdgeWrapping;
-  tex.wrapT = THREE.ClampToEdgeWrapping;
+  const textureWrapMode = getTextureWrapMode(textureRepeat, textureTiles, wrapMode);
+  tex.wrapS = textureWrapMode;
+  tex.wrapT = textureWrapMode;
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.needsUpdate = true;
   activeDepthPreviewTexture = tex;
@@ -660,8 +1141,10 @@ const applyTexture = (url: string) => {
   loader.load(
     url,
     (texture) => {
-      texture.wrapS = THREE.ClampToEdgeWrapping;
-      texture.wrapT = THREE.ClampToEdgeWrapping;
+      const { textureRepeat, textureTiles, wrapMode } = getEtchSettings();
+      const textureWrapMode = getTextureWrapMode(textureRepeat, textureTiles, wrapMode);
+      texture.wrapS = textureWrapMode;
+      texture.wrapT = textureWrapMode;
       texture.repeat.set(1, 1);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.needsUpdate = true;
@@ -671,14 +1154,16 @@ const applyTexture = (url: string) => {
 
       const image = new Image();
       image.onload = () => {
+        activeTextureColorMap = extractColorMap(image);
         activeHeightMapRaw = extractHeightMap(image);
         buildProcessedHeightMap();
         updateDepthStudioPreview();
         buildDepthPreviewTexture();
-        if (ui.depthLive.checked && (baseGrid || getModelMode() === "etch")) applySurfaceDetail();
+        if (ui.depthLive.checked) applySurfaceDetail();
         setStatus("Texture and depth map applied.");
       };
       image.onerror = () => {
+        activeTextureColorMap = null;
         activeHeightMapRaw = null;
         activeHeightMapProcessed = null;
         activeHeightMapSmoothed = null;
@@ -712,949 +1197,529 @@ window.addEventListener("unhandledrejection", (event) => {
   setStatus(`Error: ${reason}`);
 });
 
-const readConfig = (): Config & {
-  branchDensity: number;
-  thickness: number;
-  branchStyle: BranchStyle;
-  branchComplexity: number;
-  branchVariation: number;
-  branchProjection: BranchProjection;
-} => ({
-  sizeX: 26,
-  sizeY: 22,
-  sizeZ: 26,
-  cellSize: 1,
-  seed: Math.floor(Math.random() * 1_000_000) + 1,
-  maxRetries: defaultConfig.maxRetries,
-  boundaryAir: true,
-  settleGravity: true,
-  outputName: defaultConfig.outputName,
-  branchDensity: Number(ui.branchDensity.value) / 100,
-  thickness: Number(ui.thickness.value) / 100,
-  branchStyle: (ui.branchStyle.value as BranchStyle) || "balanced",
-  branchComplexity: Number(ui.branchComplexity.value) / 100,
-  branchVariation: Number(ui.branchVariation.value) / 100,
-  branchProjection: (ui.branchProjection.value as BranchProjection) || "triplanar",
-});
-
-const seededRandom = (seed: number) => {
-  let t = seed >>> 0;
-  return () => {
-    t += 0x6d2b79f5;
-    let r = Math.imul(t ^ (t >>> 15), t | 1);
-    r ^= r + Math.imul(r ^ (r >>> 7), r | 61);
-    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
-type Axis = "x" | "y" | "z";
-type Segment = {
-  axis: Axis;
-  dir: 1 | -1;
-  length: number;
-  thicknessStart: number;
-  thicknessEnd: number;
-  jitter: number;
-  seed: number;
-  start: [number, number, number];
-};
-
-type BranchingConfig = Config & {
-  branchDensity: number;
-  thickness: number;
-  branchStyle: BranchStyle;
-  branchComplexity: number;
-  branchVariation: number;
-  branchProjection: BranchProjection;
-};
-
-const indexOf = (x: number, y: number, z: number, sizeX: number, sizeY: number) => x + y * sizeX + z * sizeX * sizeY;
-
-const inBounds = (x: number, y: number, z: number, sizeX: number, sizeY: number, sizeZ: number) =>
-  x >= 0 && y >= 0 && z >= 0 && x < sizeX && y < sizeY && z < sizeZ;
-
-const randInt = (rng: () => number, min: number, max: number) => Math.floor(rng() * (max - min + 1)) + min;
-const hasAnySolid = (grid: Uint8Array) => {
-  for (let i = 0; i < grid.length; i += 1) {
-    if (grid[i] !== 0) return true;
-  }
-  return false;
-};
-
-const offsetRange = (thickness: number) => {
-  const min = -Math.floor((thickness - 1) / 2);
-  const max = Math.ceil((thickness - 1) / 2);
-  return { min, max };
-};
-
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-const fillSegment = (grid: Uint8Array, segment: Segment, sizeX: number, sizeY: number, sizeZ: number) => {
-  const { axis, dir, length, thicknessStart, thicknessEnd, jitter, start, seed } = segment;
-  const [sx, sy, sz] = start;
-  const localRng = seededRandom(seed);
-
-  for (let i = 0; i < length; i += 1) {
-    const t = length <= 1 ? 0 : i / (length - 1);
-    const baseThickness = lerp(thicknessStart, thicknessEnd, t);
-    const noisyThickness = Math.max(1, Math.round(baseThickness + (localRng() - 0.5) * jitter));
-    const { min, max } = offsetRange(noisyThickness);
-    const x = axis === "x" ? sx + dir * i : sx;
-    const y = axis === "y" ? sy + dir * i : sy;
-    const z = axis === "z" ? sz + dir * i : sz;
-
-    for (let a = min; a <= max; a += 1) {
-      for (let b = min; b <= max; b += 1) {
-        let vx = x;
-        let vy = y;
-        let vz = z;
-        if (axis === "x") {
-          vy += a;
-          vz += b;
-        } else if (axis === "y") {
-          vx += a;
-          vz += b;
-        } else {
-          vx += a;
-          vy += b;
-        }
-        if (!inBounds(vx, vy, vz, sizeX, sizeY, sizeZ)) continue;
-        grid[indexOf(vx, vy, vz, sizeX, sizeY)] = 1;
-      }
-    }
-  }
-};
-
-const addNode = (grid: Uint8Array, cx: number, cy: number, cz: number, radius: number, sizeX: number, sizeY: number, sizeZ: number) => {
-  for (let z = -radius; z <= radius; z += 1) {
-    for (let y = -radius; y <= radius; y += 1) {
-      for (let x = -radius; x <= radius; x += 1) {
-        const nx = cx + x;
-        const ny = cy + y;
-        const nz = cz + z;
-        if (!inBounds(nx, ny, nz, sizeX, sizeY, sizeZ)) continue;
-        grid[indexOf(nx, ny, nz, sizeX, sizeY)] = 1;
-      }
-    }
-  }
-};
-
-const extrudeTip = (grid: Uint8Array, axis: Axis, dir: 1 | -1, start: [number, number, number], length: number, thickness: number, sizeX: number, sizeY: number, sizeZ: number, seed: number) => {
-  const seg: Segment = {
-    axis,
-    dir,
-    length,
-    thicknessStart: thickness,
-    thicknessEnd: Math.max(1, Math.round(thickness * 0.55)),
-    jitter: Math.max(1, Math.round(thickness * 0.25)),
-    seed,
-    start,
-  };
-  fillSegment(grid, seg, sizeX, sizeY, sizeZ);
-};
-
-const generateBranching = (config: BranchingConfig) => {
-  const rng = seededRandom(config.seed || 1);
-  const sizeX = config.sizeX;
-  const sizeY = config.sizeY;
-  const sizeZ = config.sizeZ;
-  const grid = new Uint8Array(sizeX * sizeY * sizeZ);
-
-  const centerX = Math.floor(sizeX / 2);
-  const centerZ = Math.floor(sizeZ / 2);
-  const density = clamp01(config.branchDensity);
-  const complexity = clamp01(config.branchComplexity);
-  const variation = clamp01(config.branchVariation);
-  const style = config.branchStyle;
-  const varianceStrength = 0.35 + variation * 0.85;
-  const thicknessScale = 0.45 + config.thickness * 1.9;
-  const baseThickness = Math.max(1, Math.min(9, Math.floor((Math.min(sizeX, sizeZ) / 6) * thicknessScale)));
-  const margin = config.boundaryAir ? 1 : 0;
-  const trunkLen = Math.max(3, Math.floor((sizeY - margin * 2) * (0.8 + complexity * 0.3)));
-  const startY = margin;
-
-  const makeSegment = (axis: Axis, dir: 1 | -1, length: number, tStart: number, tEnd: number, start: [number, number, number]) => ({
-    axis,
-    dir,
-    length,
-    thicknessStart: tStart,
-    thicknessEnd: tEnd,
-    jitter: Math.max(1, Math.round(tStart * (0.3 + varianceStrength * 0.35))),
-    seed: randInt(rng, 1, 1_000_000),
-    start,
-  });
-
-  const trunkStart = Math.max(1, Math.round(baseThickness * (0.7 + rng() * (0.35 + varianceStrength * 0.35))));
-  const trunkEnd = Math.max(1, Math.round(baseThickness * (0.2 + rng() * (0.25 + varianceStrength * 0.25))));
-
-  const segments: Segment[] = [makeSegment("y", 1, trunkLen, trunkStart, trunkEnd, [centerX, startY, centerZ])];
-
-  if (density < 0.05) {
-    grid[indexOf(centerX, Math.floor(sizeY / 2), centerZ, sizeX, sizeY)] = 1;
-    return grid;
-  }
-
-  const pivotY = Math.min(sizeY - 1 - margin, startY + Math.floor(trunkLen * (0.45 + complexity * 0.25)));
-  const tLen = Math.max(4, Math.floor(Math.min(sizeX, sizeZ) * (0.3 + complexity * 0.2)));
-  const mainArmLen = Math.max(4, Math.floor(tLen * (0.7 + rng() * (0.4 + varianceStrength * 0.5))));
-
-  const addBalancedArms = (y: number, lengthScale: number) => {
-    const armLen = Math.max(3, Math.floor(mainArmLen * lengthScale));
-    if (density > 0.08) {
-      segments.push(makeSegment("x", 1, armLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, y, centerZ]));
-    }
-    if (density > 0.12) {
-      segments.push(makeSegment("x", -1, armLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.7)), [centerX, y, centerZ]));
-    }
-    if (density > 0.2) {
-      const zLen = Math.max(3, Math.floor(armLen * (0.6 + rng() * 0.5)));
-      segments.push(makeSegment("z", rng() > 0.5 ? 1 : -1, zLen, Math.max(2, trunkEnd - 1), Math.max(1, Math.round(trunkEnd * 0.6)), [centerX, y, centerZ]));
-    }
-  };
-
-  if (style === "cantilever") {
-    const dir = rng() > 0.5 ? 1 : -1;
-    const longLen = Math.max(4, Math.floor(mainArmLen * (1.2 + complexity * 0.6)));
-    segments.push(makeSegment("x", dir, longLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.55)), [centerX, pivotY, centerZ]));
-    if (density > 0.3) {
-      const counterLen = Math.max(3, Math.floor(mainArmLen * (0.45 + rng() * 0.3)));
-      segments.push(makeSegment("x", (dir * -1) as 1 | -1, counterLen, trunkEnd, Math.max(1, Math.round(trunkEnd * 0.6)), [centerX, pivotY, centerZ]));
-    }
-  } else {
-    addBalancedArms(pivotY, 1);
-  }
-
-  if (style === "crown") {
-    const crownY = Math.min(sizeY - 2 - margin, startY + Math.floor(trunkLen * 0.85));
-    const crownLevels = 1 + Math.round(complexity * 2);
-    for (let i = 0; i < crownLevels; i += 1) {
-      const levelY = Math.min(sizeY - 2 - margin, crownY - i * 2);
-      addBalancedArms(levelY, 0.75 + rng() * 0.35);
-    }
-  }
-
-  if (style === "stacked" && density > 0.15) {
-    const stackLevels = 2 + Math.round(complexity * 3);
-    for (let i = 0; i < stackLevels; i += 1) {
-      const t = stackLevels === 1 ? 0.5 : i / (stackLevels - 1);
-      const levelY = Math.min(sizeY - 2 - margin, startY + Math.floor(trunkLen * (0.2 + t * 0.6)));
-      addBalancedArms(levelY, 0.55 + t * 0.55);
-    }
-  }
-
-  const extraBranchFactor = config.settleGravity ? 1 : 0;
-  const maxSegments = Math.min(
-    240,
-    Math.max(1, Math.round(6 + density * density * 120 + complexity * 130) + extraBranchFactor * 6)
-  );
-
-  for (let i = 0; i < segments.length && segments.length < maxSegments; i += 1) {
-    const seg = segments[i];
-    if (seg.length < 6) continue;
-    const branchCount =
-      seg.axis === "y"
-        ? randInt(rng, 1, 2 + Math.round(density * 4 + complexity * 3) + extraBranchFactor)
-        : randInt(rng, 0, 1 + Math.round(density * 3 + complexity * 2) + extraBranchFactor);
-    for (let b = 0; b < branchCount && segments.length < maxSegments; b += 1) {
-      const pivotOffset = randInt(rng, 1, Math.max(2, seg.length - 2));
-      const px = seg.axis === "x" ? seg.start[0] + seg.dir * pivotOffset : seg.start[0];
-      const py = seg.axis === "y" ? seg.start[1] + seg.dir * pivotOffset : seg.start[1];
-      const pz = seg.axis === "z" ? seg.start[2] + seg.dir * pivotOffset : seg.start[2];
-
-      const axes: Axis[] = seg.axis === "x" ? ["y", "z"] : seg.axis === "y" ? ["x", "z"] : ["x", "y"];
-      const axis = axes[randInt(rng, 0, axes.length - 1)];
-      const dir = (() => {
-        if (axis === "x") return px < centerX ? 1 : -1;
-        if (axis === "z") return pz < centerZ ? 1 : -1;
-        return rng() > 0.55 ? 1 : -1;
-      })();
-      const inwardOutwardFlip = rng() > 0.5 ? 1 : -1;
-      const finalDir = (dir * inwardOutwardFlip) as 1 | -1;
-      const length = Math.max(2, Math.floor(seg.length * (0.2 + rng() * (0.55 + complexity * 0.25))));
-      const thinBias = rng() * (1 - density * 0.4) + variation * 0.35;
-      const tStart = Math.max(
-        1,
-        Math.round(seg.thicknessStart * (0.2 + rng() * (0.5 + variation * 0.4)) * (0.65 + thinBias))
-      );
-      const tEnd = Math.max(1, Math.round(tStart * (0.25 + rng() * (0.45 + variation * 0.35))));
-
-      segments.push(makeSegment(axis, finalDir, length, tStart, tEnd, [px, py, pz]));
-
-      if (rng() > 0.35 - complexity * 0.1 && segments.length < maxSegments) {
-        const stubAxis = axes[randInt(rng, 0, axes.length - 1)];
-        const stubDir = rng() > 0.5 ? 1 : -1;
-        const stubLen = randInt(rng, 2, 4);
-        const stubStart = Math.max(1, Math.round(tStart * 0.55));
-        segments.push(makeSegment(stubAxis, stubDir, stubLen, stubStart, Math.max(1, Math.round(stubStart * 0.5)), [px, py, pz]));
-      }
-
-      if (rng() > 0.45 - complexity * 0.15 && segments.length < maxSegments) {
-        const antennaAxis = axes[randInt(rng, 0, axes.length - 1)];
-        const antennaDir = rng() > 0.5 ? 1 : -1;
-        const antennaLen = randInt(rng, 4, 12);
-        const antennaStart = Math.max(1, Math.round(tStart * 0.3));
-        segments.push(makeSegment(antennaAxis, antennaDir, antennaLen, antennaStart, Math.max(1, Math.round(antennaStart * 0.35)), [px, py, pz]));
-      }
-    }
-  }
-
-  for (const segment of segments) {
-    fillSegment(grid, segment, sizeX, sizeY, sizeZ);
-    const tipOffset = segment.length - 1;
-    const tipX = segment.axis === "x" ? segment.start[0] + segment.dir * tipOffset : segment.start[0];
-    const tipY = segment.axis === "y" ? segment.start[1] + segment.dir * tipOffset : segment.start[1];
-    const tipZ = segment.axis === "z" ? segment.start[2] + segment.dir * tipOffset : segment.start[2];
-    if (rng() > 0.55) addNode(grid, tipX, tipY, tipZ, Math.max(1, Math.round(segment.thicknessEnd / 2)), sizeX, sizeY, sizeZ);
-    if (segment.thicknessEnd <= 2 && rng() > 0.4) {
-      const tipAxis = segment.axis;
-      const tipDir = segment.dir;
-      const tipStart: [number, number, number] = [tipX, tipY, tipZ];
-      extrudeTip(grid, tipAxis, tipDir, tipStart, randInt(rng, 2, 6), Math.max(1, segment.thicknessEnd), sizeX, sizeY, sizeZ, randInt(rng, 1, 1_000_000));
-    }
-  }
-
-  return grid;
-};
-
-const generateWfcTiles = (config: Config) => {
-  const grid = runWfc(config, tiles);
-  let tilesOut = collapseToTiles(grid, tiles);
-  tilesOut = applyGravity(tilesOut, config, tiles);
-  return tilesOut;
-};
-
-const dilate = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number, iterations = 1) => {
-  let current = grid;
-  for (let iter = 0; iter < iterations; iter += 1) {
-    const next = new Uint8Array(current);
-    for (let z = 0; z < sizeZ; z += 1) {
-      for (let y = 0; y < sizeY; y += 1) {
-        for (let x = 0; x < sizeX; x += 1) {
-          const idx = indexOf(x, y, z, sizeX, sizeY);
-          if (current[idx] === 1) continue;
-          let hasSolidNeighbor = false;
-          forEachNeighbor(x, y, z, sizeX, sizeY, sizeZ, (nx, ny, nz) => {
-            if (current[indexOf(nx, ny, nz, sizeX, sizeY)] === 1) hasSolidNeighbor = true;
-          });
-          if (hasSolidNeighbor) next[idx] = 1;
-        }
-      }
-    }
-    current = next;
-  }
-  grid.set(current);
-};
-
-const forEachNeighbor = (x: number, y: number, z: number, sizeX: number, sizeY: number, sizeZ: number, fn: (nx: number, ny: number, nz: number) => void) => {
-  const dirs = [
-    [1, 0, 0],
-    [-1, 0, 0],
-    [0, 1, 0],
-    [0, -1, 0],
-    [0, 0, 1],
-    [0, 0, -1],
-  ] as const;
-  for (const [dx, dy, dz] of dirs) {
-    const nx = x + dx;
-    const ny = y + dy;
-    const nz = z + dz;
-    if (inBounds(nx, ny, nz, sizeX, sizeY, sizeZ)) fn(nx, ny, nz);
-  }
-};
-
-const fillEnclosedAir = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number) => {
-  const visited = new Uint8Array(grid.length);
-  const queue: number[] = [];
-
-  const pushIfAir = (x: number, y: number, z: number) => {
-    const idx = indexOf(x, y, z, sizeX, sizeY);
-    if (grid[idx] === 0 && visited[idx] === 0) {
-      visited[idx] = 1;
-      queue.push(idx);
-    }
-  };
-
-  for (let x = 0; x < sizeX; x += 1) {
-    for (let y = 0; y < sizeY; y += 1) {
-      pushIfAir(x, y, 0);
-      pushIfAir(x, y, sizeZ - 1);
-    }
-  }
-  for (let z = 0; z < sizeZ; z += 1) {
-    for (let x = 0; x < sizeX; x += 1) {
-      pushIfAir(x, 0, z);
-      pushIfAir(x, sizeY - 1, z);
-    }
-  }
-  for (let z = 0; z < sizeZ; z += 1) {
-    for (let y = 0; y < sizeY; y += 1) {
-      pushIfAir(0, y, z);
-      pushIfAir(sizeX - 1, y, z);
-    }
-  }
-
-  while (queue.length) {
-    const idx = queue.shift()!;
-    const z = Math.floor(idx / (sizeX * sizeY));
-    const rem = idx - z * sizeX * sizeY;
-    const y = Math.floor(rem / sizeX);
-    const x = rem - y * sizeX;
-    forEachNeighbor(x, y, z, sizeX, sizeY, sizeZ, (nx, ny, nz) => {
-      const nIdx = indexOf(nx, ny, nz, sizeX, sizeY);
-      if (grid[nIdx] === 0 && visited[nIdx] === 0) {
-        visited[nIdx] = 1;
-        queue.push(nIdx);
-      }
-    });
-  }
-
-  for (let i = 0; i < grid.length; i += 1) {
-    if (grid[i] === 0 && visited[i] === 0) grid[i] = 1;
-  }
-};
-
-const fillThinGaps = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number, iterations = 2) => {
-  let current = grid;
-  for (let iter = 0; iter < iterations; iter += 1) {
-    const next = new Uint8Array(current);
-    for (let z = 0; z < sizeZ; z += 1) {
-      for (let y = 0; y < sizeY; y += 1) {
-        for (let x = 0; x < sizeX; x += 1) {
-          const idx = indexOf(x, y, z, sizeX, sizeY);
-          if (current[idx] === 1) continue;
-          let neighbors = 0;
-          forEachNeighbor(x, y, z, sizeX, sizeY, sizeZ, (nx, ny, nz) => {
-            if (current[indexOf(nx, ny, nz, sizeX, sizeY)] === 1) neighbors += 1;
-          });
-          if (neighbors >= 4) next[idx] = 1;
-        }
-      }
-    }
-    current = next;
-  }
-  grid.set(current);
-};
-
-const keepLargestComponent = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number) => {
-  const visited = new Uint8Array(grid.length);
-  let largest: number[] = [];
-
-  for (let i = 0; i < grid.length; i += 1) {
-    if (grid[i] === 0 || visited[i]) continue;
-    const component: number[] = [];
-    const queue = [i];
-    visited[i] = 1;
-    while (queue.length) {
-      const idx = queue.shift()!;
-      component.push(idx);
-      const z = Math.floor(idx / (sizeX * sizeY));
-      const rem = idx - z * sizeX * sizeY;
-      const y = Math.floor(rem / sizeX);
-      const x = rem - y * sizeX;
-      forEachNeighbor(x, y, z, sizeX, sizeY, sizeZ, (nx, ny, nz) => {
-        const nIdx = indexOf(nx, ny, nz, sizeX, sizeY);
-        if (grid[nIdx] === 1 && visited[nIdx] === 0) {
-          visited[nIdx] = 1;
-          queue.push(nIdx);
-        }
-      });
-    }
-    if (component.length > largest.length) largest = component;
-  }
-
-  const keep = new Uint8Array(grid.length);
-  for (const idx of largest) keep[idx] = 1;
-  for (let i = 0; i < grid.length; i += 1) grid[i] = keep[i];
-};
-
-type SolidBounds = {
-  minX: number;
-  minY: number;
-  minZ: number;
-  maxX: number;
-  maxY: number;
-  maxZ: number;
-};
-
-const getSolidBounds = (grid: Uint8Array, sizeX: number, sizeY: number, sizeZ: number): SolidBounds | null => {
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
-  for (let z = 0; z < sizeZ; z += 1) {
-    for (let y = 0; y < sizeY; y += 1) {
-      for (let x = 0; x < sizeX; x += 1) {
-        if (grid[indexOf(x, y, z, sizeX, sizeY)] === 0) continue;
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        minZ = Math.min(minZ, z);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-        maxZ = Math.max(maxZ, z);
-      }
-    }
-  }
-  if (!Number.isFinite(minX)) return null;
-  return { minX, minY, minZ, maxX, maxY, maxZ };
-};
-
-const carveDirs = [
-  { dx: 1, dy: 0, dz: 0, axis: "x" as const, sign: 1 as const },
-  { dx: -1, dy: 0, dz: 0, axis: "x" as const, sign: -1 as const },
-  { dx: 0, dy: 1, dz: 0, axis: "y" as const, sign: 1 as const },
-  { dx: 0, dy: -1, dz: 0, axis: "y" as const, sign: -1 as const },
-  { dx: 0, dy: 0, dz: 1, axis: "z" as const, sign: 1 as const },
-  { dx: 0, dy: 0, dz: -1, axis: "z" as const, sign: -1 as const },
-];
-
-const faceUvForVoxel = (
-  x: number,
-  y: number,
-  z: number,
-  axis: "x" | "y" | "z",
-  bounds: SolidBounds
-) => {
-  const spanX = Math.max(1, bounds.maxX - bounds.minX + 1);
-  const spanY = Math.max(1, bounds.maxY - bounds.minY + 1);
-  const spanZ = Math.max(1, bounds.maxZ - bounds.minZ + 1);
-  if (axis === "x") {
-    return {
-      u: (z - bounds.minZ) / spanZ,
-      v: (y - bounds.minY) / spanY,
-    };
-  }
-  if (axis === "y") {
-    return {
-      u: (x - bounds.minX) / spanX,
-      v: (z - bounds.minZ) / spanZ,
-    };
-  }
-  return {
-    u: (x - bounds.minX) / spanX,
-    v: (y - bounds.minY) / spanY,
-  };
-};
-
-const slopeClampFactor = 0.22;
-
-const getDetailSubdivisions = (faceCount: number) => {
-  if (faceCount > 2600) return 6;
-  if (faceCount > 1200) return 8;
-  return 12;
-};
-
-const lerpVec = (a: number[], b: number[], t: number) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
-
-const computeUvBounds = (faces: Face[]) => {
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
-
-  for (const face of faces) {
-    for (const v of face.vertices) {
-      minX = Math.min(minX, v[0]);
-      minY = Math.min(minY, v[1]);
-      minZ = Math.min(minZ, v[2]);
-      maxX = Math.max(maxX, v[0]);
-      maxY = Math.max(maxY, v[1]);
-      maxZ = Math.max(maxZ, v[2]);
-    }
-  }
-
-  return {
-    minX,
-    minY,
-    minZ,
-    spanX: Math.max(1e-6, maxX - minX),
-    spanY: Math.max(1e-6, maxY - minY),
-    spanZ: Math.max(1e-6, maxZ - minZ),
-  };
-};
-
-const uvFromNormal = (
-  n: [number, number, number],
-  v: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
-) => {
-  const [x, y, z] = v;
-  if (Math.abs(n[0]) === 1) {
-    return [(z - bounds.minZ) / bounds.spanZ, (y - bounds.minY) / bounds.spanY];
-  }
-  if (Math.abs(n[1]) === 1) {
-    return [(x - bounds.minX) / bounds.spanX, (z - bounds.minZ) / bounds.spanZ];
-  }
-  return [(x - bounds.minX) / bounds.spanX, (y - bounds.minY) / bounds.spanY];
-};
-
-const sampleTriPlanarTone = (
-  map: HeightMap,
-  p: number[],
-  normal: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
-) => {
-  const wx = Math.abs(normal[0]);
-  const wy = Math.abs(normal[1]);
-  const wz = Math.abs(normal[2]);
-  const sum = wx + wy + wz + 1e-6;
-  const sx = sampleHeightMap(map, (p[2] - bounds.minZ) / bounds.spanZ, (p[1] - bounds.minY) / bounds.spanY);
-  const sy = sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[2] - bounds.minZ) / bounds.spanZ);
-  const sz = sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[1] - bounds.minY) / bounds.spanY);
-  return clamp01((sx * wx + sy * wy + sz * wz) / sum);
-};
-
-const sampleDominantAxisTone = (
-  map: HeightMap,
-  p: number[],
-  normal: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
-) => {
-  const ax = Math.abs(normal[0]);
-  const ay = Math.abs(normal[1]);
-  const az = Math.abs(normal[2]);
-  if (ax >= ay && ax >= az) {
-    return sampleHeightMap(map, (p[2] - bounds.minZ) / bounds.spanZ, (p[1] - bounds.minY) / bounds.spanY);
-  }
-  if (ay >= az) {
-    return sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[2] - bounds.minZ) / bounds.spanZ);
-  }
-  return sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[1] - bounds.minY) / bounds.spanY);
-};
-
-const samplePlanarTone = (
-  map: HeightMap,
-  p: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
-) => sampleHeightMap(map, (p[0] - bounds.minX) / bounds.spanX, (p[2] - bounds.minZ) / bounds.spanZ);
-
-const sampleCylindricalTone = (
-  map: HeightMap,
-  p: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number }
-) => {
-  const centerX = bounds.minX + bounds.spanX * 0.5;
-  const centerZ = bounds.minZ + bounds.spanZ * 0.5;
-  const angle = Math.atan2(p[2] - centerZ, p[0] - centerX);
-  const u = (angle + Math.PI) / (Math.PI * 2);
-  const v = (p[1] - bounds.minY) / bounds.spanY;
-  return sampleHeightMap(map, u, v);
-};
-
-const sampleDetailTone = (
-  map: HeightMap,
-  p: number[],
-  normal: number[],
-  bounds: { minX: number; minY: number; minZ: number; spanX: number; spanY: number; spanZ: number },
-  projection: BranchProjection
-) => {
-  switch (projection) {
-    case "dominant":
-      return sampleDominantAxisTone(map, p, normal, bounds);
-    case "planar":
-      return samplePlanarTone(map, p, bounds);
-    case "cylindrical":
-      return sampleCylindricalTone(map, p, bounds);
-    default:
-      return sampleTriPlanarTone(map, p, normal, bounds);
-  }
-};
-
-const clampDisplacementSlopes = (displacements: Float32Array, basePositions: number[][], indices: number[], sign: number, maxDepth: number) => {
-  const neighbors = Array.from({ length: basePositions.length }, () => new Set<number>());
-  const addEdge = (a: number, b: number) => {
-    neighbors[a].add(b);
-    neighbors[b].add(a);
-  };
-  for (let i = 0; i < indices.length; i += 3) {
-    const a = indices[i];
-    const b = indices[i + 1];
-    const c = indices[i + 2];
-    addEdge(a, b);
-    addEdge(b, c);
-    addEdge(c, a);
-  }
-
-  for (let iter = 0; iter < 3; iter += 1) {
-    for (let i = 0; i < neighbors.length; i += 1) {
-      for (const j of neighbors[i]) {
-        if (j <= i) continue;
-        const a = basePositions[i];
-        const b = basePositions[j];
-        const edgeLen = Math.max(1e-6, Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]));
-        const maxDelta = edgeLen * slopeClampFactor;
-        const delta = displacements[i] - displacements[j];
-        if (Math.abs(delta) <= maxDelta) continue;
-        const mid = (displacements[i] + displacements[j]) * 0.5;
-        const half = (maxDelta * Math.sign(delta)) * 0.5;
-        displacements[i] = mid + half;
-        displacements[j] = mid - half;
-      }
-    }
-
-    for (let i = 0; i < displacements.length; i += 1) {
-      displacements[i] = sign > 0 ? clamp01(displacements[i] / maxDepth) * maxDepth : -clamp01(-displacements[i] / maxDepth) * maxDepth;
-    }
-  }
-};
-
-const buildFaces = (tilesOut: Tile[], config: Config): Face[] => {
-  const sizeX = config.sizeX;
-  const sizeY = config.sizeY;
-  const sizeZ = config.sizeZ;
-  const s = config.cellSize;
-  const solidIds = new Set(tilesOut.filter((tile) => tile.solid).map((tile) => tile.id));
-
-  const isSolid = (x: number, y: number, z: number) => {
-    if (x < 0 || y < 0 || z < 0 || x >= sizeX || y >= sizeY || z >= sizeZ) return false;
-    return solidIds.has(tilesOut[indexOf(x, y, z, sizeX, sizeY)].id);
-  };
-
-  const faces: Face[] = [];
-
-  for (let z = 0; z < sizeZ; z += 1) {
-    for (let y = 0; y < sizeY; y += 1) {
-      for (let x = 0; x < sizeX; x += 1) {
-        if (!isSolid(x, y, z)) continue;
-        const x0 = x * s;
-        const y0 = y * s;
-        const z0 = z * s;
-        const x1 = x0 + s;
-        const y1 = y0 + s;
-        const z1 = z0 + s;
-
-        if (!isSolid(x + 1, y, z)) {
-          faces.push({ normal: [1, 0, 0], vertices: [[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]] });
-        }
-        if (!isSolid(x - 1, y, z)) {
-          faces.push({ normal: [-1, 0, 0], vertices: [[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]] });
-        }
-        if (!isSolid(x, y + 1, z)) {
-          faces.push({ normal: [0, 1, 0], vertices: [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]] });
-        }
-        if (!isSolid(x, y - 1, z)) {
-          faces.push({ normal: [0, -1, 0], vertices: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]] });
-        }
-        if (!isSolid(x, y, z + 1)) {
-          faces.push({ normal: [0, 0, 1], vertices: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]] });
-        }
-        if (!isSolid(x, y, z - 1)) {
-          faces.push({ normal: [0, 0, -1], vertices: [[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]] });
-        }
-      }
-    }
-  }
-
-  return faces;
-};
-
-
-const buildGeometry = (faces: Face[]) => {
-  const positions: number[] = [];
-  const normals: number[] = [];
-
-  for (const face of faces) {
-    const [a, b, c, d] = face.vertices;
-    const n = face.normal;
-    positions.push(...a, ...b, ...c, ...a, ...c, ...d);
-    for (let i = 0; i < 6; i += 1) normals.push(...n);
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-  geometry.computeBoundingSphere();
-  return geometry;
-};
-
-const buildTexturedGeometry = (faces: Face[]) => {
-  const positions: number[] = [];
-  const normals: number[] = [];
-  const uvs: number[] = [];
-
-  const bounds = computeUvBounds(faces);
-  const pushUv = (n: [number, number, number], v: number[]) => {
-    const [u, vCoord] = uvFromNormal(n, v, bounds);
-    uvs.push(u, vCoord);
-  };
-
-  for (const face of faces) {
-    const [a, b, c, d] = face.vertices;
-    const n = face.normal;
-    positions.push(...a, ...b, ...c, ...a, ...c, ...d);
-    for (let i = 0; i < 6; i += 1) normals.push(...n);
-    pushUv(n, a);
-    pushUv(n, b);
-    pushUv(n, c);
-    pushUv(n, a);
-    pushUv(n, c);
-    pushUv(n, d);
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.computeBoundingSphere();
-  return geometry;
-};
-
-const buildDetailedGeometry = (faces: Face[]) => {
-  if (faces.length === 0) return new THREE.BufferGeometry();
-  const detailMap = getActiveDetailMap();
-  if (!detailMap || getCarveSettings().maxDepth <= 0) {
-    return buildTexturedGeometry(faces);
-  }
-
-  const basePositions: number[][] = [];
-  const uvs: number[] = [];
-  const normalSums: number[][] = [];
-  const normalCounts: number[] = [];
-  const indices: number[] = [];
-  const { maxDepth } = getCarveSettings();
-  const depthUnits = Math.max(0, maxDepth / Math.max(1e-6, modelScale));
-  const mode = getDetailMode();
-  const sign = mode === "emboss" ? 1 : -1;
-  const bounds = computeUvBounds(faces);
-  const projection = getBranchProjection();
-  const segments = getDetailSubdivisions(faces.length);
-  const vertexLookup = new Map<string, number>();
-  const getVertexKey = (p: number[]) => `${Math.round(p[0] * 100000)},${Math.round(p[1] * 100000)},${Math.round(p[2] * 100000)}`;
-  const pushVertex = (p: number[], uv: number[], n: [number, number, number]) => {
-    const key = getVertexKey(p);
-    const existing = vertexLookup.get(key);
-    if (existing !== undefined) {
-      normalSums[existing][0] += n[0];
-      normalSums[existing][1] += n[1];
-      normalSums[existing][2] += n[2];
-      normalCounts[existing] += 1;
-      return existing;
-    }
-    const index = basePositions.length;
-    vertexLookup.set(key, index);
-    basePositions.push([p[0], p[1], p[2]]);
-    normalSums.push([n[0], n[1], n[2]]);
-    normalCounts.push(1);
-    uvs.push(uv[0], uv[1]);
-    return index;
-  };
-
-  for (const face of faces) {
-    const [a, b, c, d] = face.vertices;
-    const n = face.normal;
-    const localIdx: number[] = [];
-
-    for (let j = 0; j <= segments; j += 1) {
-      const v = j / segments;
-      for (let i = 0; i <= segments; i += 1) {
-        const u = i / segments;
-        const ab = lerpVec(a, b, u);
-        const dc = lerpVec(d, c, u);
-        const p = lerpVec(ab, dc, v);
-        const [uvU, uvV] = uvFromNormal(n, p, bounds);
-        localIdx.push(pushVertex(p, [uvU, uvV], n));
-      }
-    }
-
-    const stride = segments + 1;
-    for (let j = 0; j < segments; j += 1) {
-      for (let i = 0; i < segments; i += 1) {
-        const i0 = i + j * stride;
-        const i1 = i + 1 + j * stride;
-        const i2 = i + 1 + (j + 1) * stride;
-        const i3 = i + (j + 1) * stride;
-        indices.push(localIdx[i0], localIdx[i1], localIdx[i2], localIdx[i0], localIdx[i2], localIdx[i3]);
-      }
-    }
-  }
-
-  const smoothNormals = normalSums.map((n) => {
-    const len = Math.max(1e-6, Math.hypot(n[0], n[1], n[2]));
-    return [n[0] / len, n[1] / len, n[2] / len];
-  });
-  const displacements = new Float32Array(basePositions.length);
-  for (let i = 0; i < basePositions.length; i += 1) {
-    const tone = sampleDetailTone(detailMap, basePositions[i], smoothNormals[i], bounds, projection);
-    const depthValue = mode === "emboss" ? tone : 1 - tone;
-    const sculptMode = getModelMode();
-    const branchLike = sculptMode === "branching" || sculptMode === "wfc";
-    const depthGamma = branchLike ? 1.5 : 2.2;
-    const tonedDepth = Math.pow(clamp01(depthValue), depthGamma);
-    const coverage = Math.min(1, normalCounts[i] / 3);
-    const edgeFloor = branchLike ? 0.4 : 0.2;
-    const edgeFactor = edgeFloor + (1 - edgeFloor) * coverage;
-    displacements[i] = tonedDepth * depthUnits * sign * edgeFactor;
-  }
-
-  clampDisplacementSlopes(displacements, basePositions, indices, sign, depthUnits);
-
-  const positions = new Float32Array(basePositions.length * 3);
-  for (let i = 0; i < basePositions.length; i += 1) {
-    const p = basePositions[i];
-    const n = smoothNormals[i];
-    const d = displacements[i];
-    positions[i * 3] = p[0] + n[0] * d;
-    positions[i * 3 + 1] = p[1] + n[1] * d;
-    positions[i * 3 + 2] = p[2] + n[2] * d;
-  }
-
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-  geometry.setIndex(indices);
-  geometry.computeVertexNormals();
-  geometry.computeBoundingSphere();
-  return geometry;
-};
-
-const buildEtchedCubeGeometry = (map: HeightMap | null) => {
-  const { cubeSizeMm, marginMm, resolution, depthGain, allFaces, wrapMode, rotation, flipX, flipY } = getEtchSettings();
+const buildEtchedBlockGeometry = (map: HeightMap | null) => {
+  const {
+    marginMm,
+    resolution,
+    depthGain,
+    allFaces,
+    wrapMode,
+    fitToVisibleFace,
+    textureRepeat,
+    textureTiles,
+    rotation,
+    flipX,
+    flipY,
+    offsetX,
+    offsetY,
+    etchStyle,
+    trenchThreshold,
+  } = getEtchSettings();
+  const { widthMm, heightMm, depthMm } = getShapeDimensions();
   const { maxDepth } = getCarveSettings();
   const mode = getDetailMode();
   const sign = mode === "emboss" ? 1 : -1;
-  const half = cubeSizeMm * 0.5;
   const seg = Math.max(16, Math.min(512, Math.round(resolution)));
-  const step = cubeSizeMm / seg;
   const softMargin = Math.max(0.25, Math.min(2.5, marginMm * 0.25));
 
   const positions: number[] = [];
   const uvs: number[] = [];
   const indices: number[] = [];
 
-  const addFace = (origin: THREE.Vector3, uDir: THREE.Vector3, vDir: THREE.Vector3, normal: THREE.Vector3, faceId: number) => {
+  const blocks: BranchBlock[] = [
+    { centerX: 0, centerY: 0, centerZ: 0, widthMm, heightMm, depthMm },
+    ...(rectKitbash ?? []),
+  ];
+  const globalBounds = new THREE.Box3();
+  for (const block of blocks) {
+    const hx = block.widthMm * 0.5;
+    const hy = block.heightMm * 0.5;
+    const hz = block.depthMm * 0.5;
+    globalBounds.expandByPoint(new THREE.Vector3(block.centerX - hx, block.centerY - hy, block.centerZ - hz));
+    globalBounds.expandByPoint(new THREE.Vector3(block.centerX + hx, block.centerY + hy, block.centerZ + hz));
+  }
+  const globalSpan = new THREE.Vector3();
+  globalBounds.getSize(globalSpan);
+  const hasValidGlobalBounds = globalSpan.x > 1e-6 && globalSpan.y > 1e-6 && globalSpan.z > 1e-6;
+  const globalWrapEnabled = wrapMode === "global" && hasValidGlobalBounds;
+  const repeatWrapEnabled = shouldUseRepeatWrapping(textureRepeat, textureTiles, wrapMode);
+  if (wrapMode === "global" && !hasValidGlobalBounds) {
+    console.warn("Global seamless wrap requested but bounds were invalid; falling back to per-face projection.");
+  }
+
+  const projectGlobalUv = (point: THREE.Vector3, normal: THREE.Vector3, uvMode: UvTransformMode) => {
+    const [u, v] = computeGlobalUv(point, normal, globalBounds);
+    return transformUv(u, v, rotation, flipX, flipY, textureTiles, offsetX, offsetY, uvMode);
+  };
+
+  type FaceSpec = {
+    origin: THREE.Vector3;
+    uDir: THREE.Vector3;
+    vDir: THREE.Vector3;
+    normal: THREE.Vector3;
+    w: number;
+    h: number;
+    faceId: number;
+    blockIndex: number;
+  };
+
+  const isPointInsideBlockCoords = (x: number, y: number, z: number, block: BranchBlock, eps = 1e-4) => {
+    const hx = block.widthMm * 0.5 + eps;
+    const hy = block.heightMm * 0.5 + eps;
+    const hz = block.depthMm * 0.5 + eps;
+    return (
+      x >= block.centerX - hx &&
+      x <= block.centerX + hx &&
+      y >= block.centerY - hy &&
+      y <= block.centerY + hy &&
+      z >= block.centerZ - hz &&
+      z <= block.centerZ + hz
+    );
+  };
+
+  const isPointInsideBlock = (p: THREE.Vector3, block: BranchBlock, eps = 1e-4) =>
+    isPointInsideBlockCoords(p.x, p.y, p.z, block, eps);
+
+  const faceCorners = (face: FaceSpec) => {
+    const halfW = face.w * 0.5;
+    const halfH = face.h * 0.5;
+    const c0 = face.origin.clone().addScaledVector(face.uDir, -halfW).addScaledVector(face.vDir, -halfH);
+    const c1 = face.origin.clone().addScaledVector(face.uDir, halfW).addScaledVector(face.vDir, -halfH);
+    const c2 = face.origin.clone().addScaledVector(face.uDir, halfW).addScaledVector(face.vDir, halfH);
+    const c3 = face.origin.clone().addScaledVector(face.uDir, -halfW).addScaledVector(face.vDir, halfH);
+    return [c0, c1, c2, c3];
+  };
+
+  const isFaceInternal = (face: FaceSpec, blockSet: BranchBlock[]) => {
+    const corners = faceCorners(face);
+    for (let i = 0; i < blockSet.length; i += 1) {
+      if (i === face.blockIndex) continue;
+      const block = blockSet[i];
+      let inside = true;
+      for (const c of corners) {
+        if (!isPointInsideBlock(c, block)) {
+          inside = false;
+          break;
+        }
+      }
+      if (inside) return true;
+    }
+    return false;
+  };
+
+  const overlapsRange = (minA: number, maxA: number, minB: number, maxB: number) => minA <= maxB && maxA >= minB;
+
+  const getOverlapBlocks = (face: FaceSpec, blockSet: BranchBlock[]) => {
+    const eps = 1e-4;
+    const overlapBlocks: BranchBlock[] = [];
+    const absX = Math.abs(face.normal.x);
+    const absY = Math.abs(face.normal.y);
+    const axis: "x" | "y" | "z" = absX > 0.5 ? "x" : absY > 0.5 ? "y" : "z";
+
+    if (axis === "x") {
+      const plane = face.origin.x;
+      const faceMinY = face.origin.y - face.h * 0.5;
+      const faceMaxY = face.origin.y + face.h * 0.5;
+      const faceMinZ = face.origin.z - face.w * 0.5;
+      const faceMaxZ = face.origin.z + face.w * 0.5;
+      for (let i = 0; i < blockSet.length; i += 1) {
+        if (i === face.blockIndex) continue;
+        const block = blockSet[i];
+        const minX = block.centerX - block.widthMm * 0.5;
+        const maxX = block.centerX + block.widthMm * 0.5;
+        const minY = block.centerY - block.heightMm * 0.5;
+        const maxY = block.centerY + block.heightMm * 0.5;
+        const minZ = block.centerZ - block.depthMm * 0.5;
+        const maxZ = block.centerZ + block.depthMm * 0.5;
+        if (
+          plane >= minX - eps &&
+          plane <= maxX + eps &&
+          overlapsRange(minY, maxY, faceMinY, faceMaxY) &&
+          overlapsRange(minZ, maxZ, faceMinZ, faceMaxZ)
+        ) {
+          overlapBlocks.push(block);
+        }
+      }
+      return overlapBlocks;
+    }
+
+    if (axis === "y") {
+      const plane = face.origin.y;
+      const faceMinX = face.origin.x - face.w * 0.5;
+      const faceMaxX = face.origin.x + face.w * 0.5;
+      const faceMinZ = face.origin.z - face.h * 0.5;
+      const faceMaxZ = face.origin.z + face.h * 0.5;
+      for (let i = 0; i < blockSet.length; i += 1) {
+        if (i === face.blockIndex) continue;
+        const block = blockSet[i];
+        const minX = block.centerX - block.widthMm * 0.5;
+        const maxX = block.centerX + block.widthMm * 0.5;
+        const minY = block.centerY - block.heightMm * 0.5;
+        const maxY = block.centerY + block.heightMm * 0.5;
+        const minZ = block.centerZ - block.depthMm * 0.5;
+        const maxZ = block.centerZ + block.depthMm * 0.5;
+        if (
+          plane >= minY - eps &&
+          plane <= maxY + eps &&
+          overlapsRange(minX, maxX, faceMinX, faceMaxX) &&
+          overlapsRange(minZ, maxZ, faceMinZ, faceMaxZ)
+        ) {
+          overlapBlocks.push(block);
+        }
+      }
+      return overlapBlocks;
+    }
+
+    const plane = face.origin.z;
+    const faceMinX = face.origin.x - face.w * 0.5;
+    const faceMaxX = face.origin.x + face.w * 0.5;
+    const faceMinY = face.origin.y - face.h * 0.5;
+    const faceMaxY = face.origin.y + face.h * 0.5;
+    for (let i = 0; i < blockSet.length; i += 1) {
+      if (i === face.blockIndex) continue;
+      const block = blockSet[i];
+      const minX = block.centerX - block.widthMm * 0.5;
+      const maxX = block.centerX + block.widthMm * 0.5;
+      const minY = block.centerY - block.heightMm * 0.5;
+      const maxY = block.centerY + block.heightMm * 0.5;
+      const minZ = block.centerZ - block.depthMm * 0.5;
+      const maxZ = block.centerZ + block.depthMm * 0.5;
+      if (
+        plane >= minZ - eps &&
+        plane <= maxZ + eps &&
+        overlapsRange(minX, maxX, faceMinX, faceMaxX) &&
+        overlapsRange(minY, maxY, faceMinY, faceMaxY)
+      ) {
+        overlapBlocks.push(block);
+      }
+    }
+    return overlapBlocks;
+  };
+
+  const buildFaceSpecs = (block: BranchBlock, blockIndex: number): FaceSpec[] => {
+    const hx = block.widthMm * 0.5;
+    const hy = block.heightMm * 0.5;
+    const hz = block.depthMm * 0.5;
+    return [
+      { origin: new THREE.Vector3(block.centerX, block.centerY, block.centerZ + hz), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(0, 0, 1), w: block.widthMm, h: block.heightMm, faceId: 0, blockIndex },
+      { origin: new THREE.Vector3(block.centerX, block.centerY, block.centerZ - hz), uDir: new THREE.Vector3(-1, 0, 0), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(0, 0, -1), w: block.widthMm, h: block.heightMm, faceId: 1, blockIndex },
+      { origin: new THREE.Vector3(block.centerX + hx, block.centerY, block.centerZ), uDir: new THREE.Vector3(0, 0, -1), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(1, 0, 0), w: block.depthMm, h: block.heightMm, faceId: 2, blockIndex },
+      { origin: new THREE.Vector3(block.centerX - hx, block.centerY, block.centerZ), uDir: new THREE.Vector3(0, 0, 1), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(-1, 0, 0), w: block.depthMm, h: block.heightMm, faceId: 3, blockIndex },
+      { origin: new THREE.Vector3(block.centerX, block.centerY + hy, block.centerZ), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, 0, 1), normal: new THREE.Vector3(0, 1, 0), w: block.widthMm, h: block.depthMm, faceId: 4, blockIndex },
+      { origin: new THREE.Vector3(block.centerX, block.centerY - hy, block.centerZ), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, 0, -1), normal: new THREE.Vector3(0, -1, 0), w: block.widthMm, h: block.depthMm, faceId: 5, blockIndex },
+    ];
+  };
+
+  const addQuadWithUvs = (
+    v0: THREE.Vector3,
+    v1: THREE.Vector3,
+    v2: THREE.Vector3,
+    v3: THREE.Vector3,
+    uv0: [number, number],
+    uv1: [number, number],
+    uv2: [number, number],
+    uv3: [number, number],
+    desiredNormal: THREE.Vector3,
+    invertWinding: boolean
+  ) => {
+    const baseIndex = positions.length / 3;
+    positions.push(v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z, v3.x, v3.y, v3.z);
+    uvs.push(uv0[0], uv0[1], uv1[0], uv1[1], uv2[0], uv2[1], uv3[0], uv3[1]);
+
+    const ax = v1.x - v0.x;
+    const ay = v1.y - v0.y;
+    const az = v1.z - v0.z;
+    const bx = v2.x - v0.x;
+    const by = v2.y - v0.y;
+    const bz = v2.z - v0.z;
+    const nx = ay * bz - az * by;
+    const ny = az * bx - ax * bz;
+    const nz = ax * by - ay * bx;
+    const dot = nx * desiredNormal.x + ny * desiredNormal.y + nz * desiredNormal.z;
+    const flip = invertWinding ? dot > 0 : dot < 0;
+
+    const i0 = baseIndex;
+    const i1 = baseIndex + 1;
+    const i2 = baseIndex + 2;
+    const i3 = baseIndex + 3;
+    if (flip) {
+      indices.push(i0, i2, i1, i0, i3, i2);
+    } else {
+      indices.push(i0, i1, i2, i0, i2, i3);
+    }
+  };
+
+  const addTrenchFace = (face: FaceSpec, overlapBlocks: BranchBlock[], invertWinding: boolean) => {
+    const halfW = face.w * 0.5;
+    const halfH = face.h * 0.5;
+    const cellDepths = new Float32Array(seg * seg);
+    const cellMask = new Uint8Array(seg * seg);
+    const depthScale = maxDepth * depthGain;
+    const insideEps = -1e-3;
+    const depthEps = 1e-4;
+    const useWrap = !globalWrapEnabled && wrapMode === "sides" && Math.abs(face.normal.y) < 0.5;
+    const sampleMode: UvTransformMode = repeatWrapEnabled ? "repeat" : "clamp";
+    const renderMode: UvTransformMode = repeatWrapEnabled ? "continuous" : "clamp";
+    const projectFaceUv = (point: THREE.Vector3, mode: UvTransformMode, normalHint: THREE.Vector3 = face.normal) => {
+      if (globalWrapEnabled) {
+        return projectGlobalUv(point, normalHint, mode);
+      }
+      if (useWrap) {
+        return sampleWrappedUv(point, widthMm, heightMm, depthMm, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+      }
+      const dx = point.x - face.origin.x;
+      const dy = point.y - face.origin.y;
+      const dz = point.z - face.origin.z;
+      const localU = dx * face.uDir.x + dy * face.uDir.y + dz * face.uDir.z;
+      const localV = dx * face.vDir.x + dy * face.vDir.y + dz * face.vDir.z;
+      const u = (localU + halfW) / face.w;
+      const v = (halfH - localV) / face.h;
+      return transformUv(u, v, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+    };
+
+    for (let iy = 0; iy < seg; iy += 1) {
+      for (let ix = 0; ix < seg; ix += 1) {
+        const u = (ix + 0.5) / seg;
+        const v = (iy + 0.5) / seg;
+        const px = -halfW + u * face.w;
+        const py = halfH - v * face.h;
+        const cx = face.origin.x + face.uDir.x * px + face.vDir.x * py;
+        const cy = face.origin.y + face.uDir.y * px + face.vDir.y * py;
+        const cz = face.origin.z + face.uDir.z * px + face.vDir.z * py;
+        let blocked = false;
+        for (const block of overlapBlocks) {
+          if (isPointInsideBlockCoords(cx, cy, cz, block, insideEps)) {
+            blocked = true;
+            break;
+          }
+        }
+        if (blocked) continue;
+
+        let depth = 0;
+        if (map && depthScale > 0) {
+          const edgeDist = Math.min(px + halfW, halfW - px, py + halfH, halfH - py);
+          if (edgeDist > marginMm) {
+            const pos = new THREE.Vector3(cx, cy, cz);
+            const [uvU, uvV] = projectFaceUv(pos, sampleMode);
+            const tone = sampleDetailHeight(map, uvU, uvV);
+            const depthValue = mode === "emboss" ? tone : 1 - tone;
+            depth = depthValue >= trenchThreshold ? depthScale : 0;
+          }
+        }
+        cellMask[ix + iy * seg] = 1;
+        cellDepths[ix + iy * seg] = depth;
+      }
+    }
+
+    const getCorner = (u: number, v: number) => {
+      const px = -halfW + u * face.w;
+      const py = halfH - v * face.h;
+      return new THREE.Vector3(
+        face.origin.x + face.uDir.x * px + face.vDir.x * py,
+        face.origin.y + face.uDir.y * px + face.vDir.y * py,
+        face.origin.z + face.uDir.z * px + face.vDir.z * py
+      );
+    };
+
+    for (let iy = 0; iy < seg; iy += 1) {
+      for (let ix = 0; ix < seg; ix += 1) {
+        const idx = ix + iy * seg;
+        if (cellMask[idx] === 0) continue;
+        const depth = cellDepths[idx];
+        const offset = depth * sign;
+
+        const u0 = ix / seg;
+        const u1 = (ix + 1) / seg;
+        const v0 = iy / seg;
+        const v1 = (iy + 1) / seg;
+
+        const base00 = getCorner(u0, v0);
+        const base10 = getCorner(u1, v0);
+        const base11 = getCorner(u1, v1);
+        const base01 = getCorner(u0, v1);
+
+        const v00 = base00.clone().addScaledVector(face.normal, offset);
+        const v10 = base10.clone().addScaledVector(face.normal, offset);
+        const v11 = base11.clone().addScaledVector(face.normal, offset);
+        const v01 = base01.clone().addScaledVector(face.normal, offset);
+
+        const uv00 = projectFaceUv(base00, renderMode);
+        const uv10 = projectFaceUv(base10, renderMode);
+        const uv11 = projectFaceUv(base11, renderMode);
+        const uv01 = projectFaceUv(base01, renderMode);
+
+        addQuadWithUvs(v00, v10, v11, v01, uv00, uv10, uv11, uv01, face.normal, invertWinding);
+
+        if (depth <= depthEps) continue;
+
+        const leftIdx = ix - 1 + iy * seg;
+        const rightIdx = ix + 1 + iy * seg;
+        const topIdx = ix + (iy - 1) * seg;
+        const bottomIdx = ix + (iy + 1) * seg;
+
+        const leftIncluded = ix > 0 && cellMask[leftIdx] === 1;
+        const rightIncluded = ix < seg - 1 && cellMask[rightIdx] === 1;
+        const topIncluded = iy > 0 && cellMask[topIdx] === 1;
+        const bottomIncluded = iy < seg - 1 && cellMask[bottomIdx] === 1;
+
+        const leftDepth = leftIncluded ? cellDepths[leftIdx] : 0;
+        const rightDepth = rightIncluded ? cellDepths[rightIdx] : 0;
+        const topDepth = topIncluded ? cellDepths[topIdx] : 0;
+        const bottomDepth = bottomIncluded ? cellDepths[bottomIdx] : 0;
+
+        const addWall = (p0: THREE.Vector3, p1: THREE.Vector3, neighborDepth: number, outwardDir: THREE.Vector3) => {
+          if (depth <= neighborDepth + depthEps) return;
+          const desiredNormal = invertWinding ? outwardDir.clone().multiplyScalar(-1) : outwardDir;
+          const offA = depth * sign;
+          const offB = neighborDepth * sign;
+          const w0 = p0.clone().addScaledVector(face.normal, offA);
+          const w1 = p1.clone().addScaledVector(face.normal, offA);
+          const w2 = p1.clone().addScaledVector(face.normal, offB);
+          const w3 = p0.clone().addScaledVector(face.normal, offB);
+          const uv0 = projectFaceUv(w0, renderMode, outwardDir);
+          const uv1 = projectFaceUv(w1, renderMode, outwardDir);
+          const uv2 = projectFaceUv(w2, renderMode, outwardDir);
+          const uv3 = projectFaceUv(w3, renderMode, outwardDir);
+          addQuadWithUvs(w0, w1, w2, w3, uv0, uv1, uv2, uv3, desiredNormal, false);
+        };
+
+        if (ix === 0) {
+          addWall(base00, base01, 0, face.uDir.clone().multiplyScalar(-1));
+        } else if (leftIncluded) {
+          addWall(base00, base01, leftDepth, face.uDir.clone().multiplyScalar(-1));
+        }
+
+        if (ix === seg - 1) {
+          addWall(base10, base11, 0, face.uDir.clone());
+        } else if (rightIncluded) {
+          addWall(base10, base11, rightDepth, face.uDir.clone());
+        }
+
+        if (iy === 0) {
+          addWall(base00, base10, 0, face.vDir.clone().multiplyScalar(-1));
+        } else if (topIncluded) {
+          addWall(base00, base10, topDepth, face.vDir.clone().multiplyScalar(-1));
+        }
+
+        if (iy === seg - 1) {
+          addWall(base01, base11, 0, face.vDir.clone());
+        } else if (bottomIncluded) {
+          addWall(base01, base11, bottomDepth, face.vDir.clone());
+        }
+      }
+    }
+  };
+
+  const addFace = (
+    face: FaceSpec,
+    applyEtch: boolean,
+    invertWinding: boolean,
+    overlapBlocks: BranchBlock[],
+    normalOffset: number
+  ) => {
+    if (applyEtch && etchStyle === "trench") {
+      addTrenchFace(face, overlapBlocks, invertWinding);
+      return;
+    }
     const baseIndex = positions.length / 3;
     const indexAt = (x: number, y: number) => baseIndex + x + y * (seg + 1);
+    const halfW = face.w * 0.5;
+    const halfH = face.h * 0.5;
+    const shouldCull = overlapBlocks.length > 0;
+    const insideEps = -1e-3;
+    const useWrap = !globalWrapEnabled && wrapMode === "sides" && Math.abs(face.normal.y) < 0.5;
+    const sampleMode: UvTransformMode = repeatWrapEnabled ? "repeat" : "clamp";
+    const renderMode: UvTransformMode = repeatWrapEnabled ? "continuous" : "clamp";
+    const hiddenMask = shouldCull ? new Uint8Array(seg * seg) : null;
+    let visibleMinX = 0;
+    let visibleMaxX = seg - 1;
+    let visibleMinY = 0;
+    let visibleMaxY = seg - 1;
+
+    if (shouldCull) {
+      if (fitToVisibleFace && !useWrap && !globalWrapEnabled) {
+        visibleMinX = seg;
+        visibleMaxX = -1;
+        visibleMinY = seg;
+        visibleMaxY = -1;
+      }
+      for (let iy = 0; iy < seg; iy += 1) {
+        for (let ix = 0; ix < seg; ix += 1) {
+          const u = (ix + 0.5) / seg;
+          const v = (iy + 0.5) / seg;
+          const px = -halfW + u * face.w;
+          const py = halfH - v * face.h;
+          const cx = face.origin.x + face.uDir.x * px + face.vDir.x * py;
+          const cy = face.origin.y + face.uDir.y * px + face.vDir.y * py;
+          const cz = face.origin.z + face.uDir.z * px + face.vDir.z * py;
+          let hidden = false;
+          for (const block of overlapBlocks) {
+            if (isPointInsideBlockCoords(cx, cy, cz, block, insideEps)) {
+              hidden = true;
+              break;
+            }
+          }
+          if (hidden) {
+            hiddenMask![ix + iy * seg] = 1;
+            continue;
+          }
+          if (fitToVisibleFace && !useWrap && !globalWrapEnabled) {
+            visibleMinX = Math.min(visibleMinX, ix);
+            visibleMaxX = Math.max(visibleMaxX, ix);
+            visibleMinY = Math.min(visibleMinY, iy);
+            visibleMaxY = Math.max(visibleMaxY, iy);
+          }
+        }
+      }
+      if (fitToVisibleFace && !useWrap && !globalWrapEnabled && visibleMaxX < visibleMinX) {
+        visibleMinX = 0;
+        visibleMaxX = seg - 1;
+        visibleMinY = 0;
+        visibleMaxY = seg - 1;
+      }
+    }
+
+    const visibleU0 = fitToVisibleFace && !useWrap && !globalWrapEnabled ? visibleMinX / seg : 0;
+    const visibleU1 = fitToVisibleFace && !useWrap && !globalWrapEnabled ? (visibleMaxX + 1) / seg : 1;
+    const visibleV0 = fitToVisibleFace && !useWrap && !globalWrapEnabled ? visibleMinY / seg : 0;
+    const visibleV1 = fitToVisibleFace && !useWrap && !globalWrapEnabled ? (visibleMaxY + 1) / seg : 1;
+    const visibleSpanU = Math.max(1e-6, visibleU1 - visibleU0);
+    const visibleSpanV = Math.max(1e-6, visibleV1 - visibleV0);
+    const projectUv = (u: number, v: number, pos: THREE.Vector3, mode: UvTransformMode) => {
+      if (globalWrapEnabled) {
+        return projectGlobalUv(pos, face.normal, mode);
+      }
+      if (useWrap) {
+        return sampleWrappedUv(pos, widthMm, heightMm, depthMm, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+      }
+      const uFace = fitToVisibleFace ? clamp01((u - visibleU0) / visibleSpanU) : u;
+      const vFace = fitToVisibleFace ? clamp01((v - visibleV0) / visibleSpanV) : v;
+      return transformUv(uFace, vFace, rotation, flipX, flipY, textureTiles, offsetX, offsetY, mode);
+    };
+
     for (let iy = 0; iy <= seg; iy += 1) {
       const v = iy / seg;
       for (let ix = 0; ix <= seg; ix += 1) {
         const u = ix / seg;
-        const px = -half + u * cubeSizeMm;
-        const py = half - v * cubeSizeMm;
-        const pos = new THREE.Vector3()
-          .addScaledVector(uDir, px)
-          .addScaledVector(vDir, py)
-          .add(origin);
-        const useWrap = wrapMode === "sides" && Math.abs(normal.y) < 0.5;
-        const [uvU, uvV] = useWrap
-          ? sampleWrappedUv(pos, cubeSizeMm, rotation, flipX, flipY)
-          : transformUv(u, v, rotation, flipX, flipY);
+        const px = -halfW + u * face.w;
+        const py = halfH - v * face.h;
+        const pos = new THREE.Vector3().addScaledVector(face.uDir, px).addScaledVector(face.vDir, py).add(face.origin);
+        const [sampleU, sampleV] = projectUv(u, v, pos, sampleMode);
+        const [uvU, uvV] = projectUv(u, v, pos, renderMode);
 
         let depth = 0;
-        if (map && maxDepth > 0) {
-          const edgeDist = Math.min(px + half, half - px, py + half, half - py);
+        if (applyEtch && map && maxDepth > 0) {
+          const edgeDist = Math.min(px + halfW, halfW - px, py + halfH, halfH - py);
           if (edgeDist > marginMm) {
             const fade = clamp01((edgeDist - marginMm) / softMargin);
-            const tone = sampleHeightMap(map, uvU, uvV);
+            const tone = sampleDetailHeight(map, sampleU, sampleV);
             const depthValue = mode === "emboss" ? tone : 1 - tone;
             const posterized = Number(ui.depthPosterize.value) > 0;
             const hardPower = posterized ? 1.0 : 1.25;
             depth = Math.pow(clamp01(depthValue), hardPower) * maxDepth * depthGain * fade;
           }
         }
-        const displaced = pos.clone().addScaledVector(normal, depth * sign);
+        const displaced = pos.clone().addScaledVector(face.normal, depth * sign + normalOffset);
         positions.push(displaced.x, displaced.y, displaced.z);
         uvs.push(uvU, uvV);
       }
@@ -1662,30 +1727,40 @@ const buildEtchedCubeGeometry = (map: HeightMap | null) => {
 
     for (let iy = 0; iy < seg; iy += 1) {
       for (let ix = 0; ix < seg; ix += 1) {
+        if (shouldCull && hiddenMask![ix + iy * seg] === 1) continue;
         const i0 = indexAt(ix, iy);
         const i1 = indexAt(ix + 1, iy);
         const i2 = indexAt(ix + 1, iy + 1);
         const i3 = indexAt(ix, iy + 1);
-        indices.push(i0, i2, i1, i0, i3, i2);
+        if (invertWinding) {
+          indices.push(i0, i1, i2, i0, i2, i3);
+        } else {
+          indices.push(i0, i2, i1, i0, i3, i2);
+        }
       }
     }
   };
 
-  const faces = [
-    { origin: new THREE.Vector3(0, 0, half), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(0, 0, 1), id: 0 },
-    { origin: new THREE.Vector3(0, 0, -half), uDir: new THREE.Vector3(-1, 0, 0), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(0, 0, -1), id: 1 },
-    { origin: new THREE.Vector3(half, 0, 0), uDir: new THREE.Vector3(0, 0, -1), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(1, 0, 0), id: 2 },
-    { origin: new THREE.Vector3(-half, 0, 0), uDir: new THREE.Vector3(0, 0, 1), vDir: new THREE.Vector3(0, -1, 0), normal: new THREE.Vector3(-1, 0, 0), id: 3 },
-    { origin: new THREE.Vector3(0, half, 0), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, 0, 1), normal: new THREE.Vector3(0, 1, 0), id: 4 },
-    { origin: new THREE.Vector3(0, -half, 0), uDir: new THREE.Vector3(1, 0, 0), vDir: new THREE.Vector3(0, 0, -1), normal: new THREE.Vector3(0, -1, 0), id: 5 },
-  ];
+  const addFacesFromBlocks = (
+    blockSet: BranchBlock[],
+    applyEtchFn: (face: FaceSpec) => boolean,
+    invertWinding: boolean,
+    normalOffset: number
+  ) => {
+    for (let i = 0; i < blockSet.length; i += 1) {
+      const faces = buildFaceSpecs(blockSet[i], i);
+      for (const face of faces) {
+        if (isFaceInternal(face, blockSet)) continue;
+        const overlapBlocks = getOverlapBlocks(face, blockSet);
+        addFace(face, applyEtchFn(face), invertWinding, overlapBlocks, normalOffset);
+      }
+    }
+  };
 
-  if (allFaces) {
-    for (const face of faces) addFace(face.origin, face.uDir, face.vDir, face.normal, face.id);
-  } else {
-    const face = faces[0];
-    addFace(face.origin, face.uDir, face.vDir, face.normal, face.id);
-  }
+  const applyOuterEtch = (face: FaceSpec) => allFaces || (face.blockIndex === 0 && face.faceId === 0);
+
+  addFacesFromBlocks(blocks, applyOuterEtch, false, 0);
+
 
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
@@ -1697,6 +1772,13 @@ const buildEtchedCubeGeometry = (map: HeightMap | null) => {
 };
 
 const showGeometry = (geometry: THREE.BufferGeometry) => {
+  // Dispose previous mesh geometries before replacing them to avoid GPU memory leaks.
+  for (const child of group.children) {
+    const mesh = child as THREE.Mesh;
+    if (mesh.geometry && typeof mesh.geometry.dispose === "function") {
+      mesh.geometry.dispose();
+    }
+  }
   group.clear();
   currentGeometry = geometry;
   const mesh = new THREE.Mesh(geometry, sharedMaterial);
@@ -1753,58 +1835,22 @@ const showGeometry = (geometry: THREE.BufferGeometry) => {
   lastCameraState.target.copy(controls.target);
 };
 
-const rebuildMesh = () => {
-  currentFaces = buildFaces(currentTiles, currentConfig);
-  const solidCount = currentTiles.filter((tile) => tile.solid).length;
-  if (solidCount === 0) {
-    setStatus(`No solid voxels. Try a new seed.`);
-    return;
-  }
-  if (currentFaces.length === 0) {
-    setStatus(`Generated voxels but found no surface faces.`);
-    return;
-  }
-  const bounds = computeUvBounds(currentFaces);
-  const maxDim = Math.max(bounds.spanX, bounds.spanY, bounds.spanZ);
-  modelScale = maxDim > 0 ? targetSizeMM / maxDim : 1;
-  const geometry = buildDetailedGeometry(currentFaces);
-  geometry.scale(modelScale, modelScale, modelScale);
-  geometry.center();
-  showGeometry(geometry);
-};
-
 const applySurfaceDetail = () => {
-  const mode = getModelMode();
-  if (mode === "etch") {
-    currentFaces = [];
-    modelScale = 1;
-    const geometry = buildEtchedCubeGeometry(getActiveDetailMap());
-    showGeometry(geometry);
-    const { cubeSizeMm } = getEtchSettings();
-    const { maxDepth } = getCarveSettings();
-    const label = getDetailMode() === "emboss" ? "Emboss" : "Carve";
-    if (getActiveDetailMap() && maxDepth > 0) {
-      setStatus(`Ready. Etch cube ${cubeSizeMm} mm. ${label} ${maxDepth.toFixed(1)} mm.`);
-    } else {
-      setStatus(`Ready. Etch cube ${cubeSizeMm} mm. Load an image to carve.`);
-    }
-    return;
-  }
-
-  if (mode === "branching") {
-    if (!baseGrid) return;
-    currentTiles = Array.from(baseGrid, (value) => (value ? solidTile : airTile));
-  } else if (mode === "wfc") {
-    if (currentTiles.length === 0) return;
-  }
-  rebuildMesh();
-  const solidCount = currentTiles.filter((tile) => tile.solid).length;
+  const geometry = buildEtchedBlockGeometry(getActiveDetailMap());
+  currentGeometry = geometry;
+  showGeometry(geometry);
+  const { shape, widthMm, heightMm, depthMm } = getShapeDimensions();
   const { maxDepth } = getCarveSettings();
+  const label = getDetailMode() === "emboss" ? "Emboss" : "Carve";
+  const attachmentCount = shape === "rect" && rectKitbash ? rectKitbash.length : 0;
+  const sizeLabel =
+    shape === "cube"
+      ? `${Math.round(widthMm)} mm cube`
+      : `${Math.round(widthMm)}x${Math.round(heightMm)}x${Math.round(depthMm)} mm rectangle${attachmentCount ? ` + ${attachmentCount} blocks` : ""}`;
   if (getActiveDetailMap() && maxDepth > 0) {
-    const label = getDetailMode() === "emboss" ? "Emboss" : "Carve";
-    setStatus(`Ready. Solids ${solidCount}. ${label} ${maxDepth.toFixed(1)} mm. For crisp engraving, switch Mode to Etch Cube.`);
+    setStatus(`Ready. Etch ${sizeLabel}. ${label} ${maxDepth.toFixed(1)} mm.`);
   } else {
-    setStatus(`Ready. Solids ${solidCount}.`);
+    setStatus(`Ready. Etch ${sizeLabel}. Load an image to carve.`);
   }
 };
 
@@ -1816,47 +1862,13 @@ const generate = () => {
   // Let the UI paint the busy state before heavy work.
   setTimeout(() => {
     try {
-      const mode = getModelMode();
-      if (mode === "etch") {
-        baseGrid = null;
-        applySurfaceDetail();
-        return;
+      const shape = getShapeMode();
+      if (shape === "rect") {
+        if (forceBranchRandomize || !rectKitbash) rectKitbash = makeRectKitbash(getShellSettings().wallThicknessMm);
+      } else {
+        rectKitbash = null;
       }
-      const initialConfig = readConfig();
-      if (mode === "wfc") {
-        currentConfig = initialConfig;
-        baseGrid = null;
-        currentTiles = generateWfcTiles(initialConfig);
-        applySurfaceDetail();
-        return;
-      }
-      const attempts = Math.max(1, initialConfig.maxRetries);
-      let chosenConfig: BranchingConfig | null = null;
-      let chosenGrid: Uint8Array | null = null;
-
-      for (let attempt = 0; attempt < attempts; attempt += 1) {
-        const attemptConfig = {
-          ...initialConfig,
-          seed: Math.floor(Math.random() * 1_000_000) + 1,
-        };
-        const grid = generateBranching(attemptConfig);
-        // Thicken to remove open faces/voids while keeping thin branches.
-        dilate(grid, attemptConfig.sizeX, attemptConfig.sizeY, attemptConfig.sizeZ, 1);
-        fillEnclosedAir(grid, attemptConfig.sizeX, attemptConfig.sizeY, attemptConfig.sizeZ);
-        fillThinGaps(grid, attemptConfig.sizeX, attemptConfig.sizeY, attemptConfig.sizeZ, 2);
-        keepLargestComponent(grid, attemptConfig.sizeX, attemptConfig.sizeY, attemptConfig.sizeZ);
-        if (!hasAnySolid(grid)) continue;
-        chosenConfig = attemptConfig;
-        chosenGrid = grid;
-        break;
-      }
-
-      if (!chosenConfig || !chosenGrid) {
-        throw new Error(`Generator produced no solids after ${attempts} attempts.`);
-      }
-
-      currentConfig = chosenConfig;
-      baseGrid = chosenGrid;
+      forceBranchRandomize = false;
       applySurfaceDetail();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -1874,27 +1886,6 @@ const render = () => {
   renderer.render(scene, camera);
   depthRenderer.render(depthScene, depthCamera);
   requestAnimationFrame(render);
-};
-
-const voxelToStl = (faces: Face[]) => {
-  const triangles: string[] = [];
-  const addTri = (n: [number, number, number], a: number[], b: number[], c: number[]) => {
-    triangles.push(
-      `facet normal ${n[0]} ${n[1]} ${n[2]}\n` +
-        `  outer loop\n` +
-        `    vertex ${a[0]} ${a[1]} ${a[2]}\n` +
-        `    vertex ${b[0]} ${b[1]} ${b[2]}\n` +
-        `    vertex ${c[0]} ${c[1]} ${c[2]}\n` +
-        `  endloop\n` +
-        `endfacet`
-    );
-  };
-  for (const face of faces) {
-    const [a, b, c, d] = face.vertices;
-    addTri(face.normal, a, b, c);
-    addTri(face.normal, a, c, d);
-  }
-  return `solid branching\n${triangles.join("\n")}\nendsolid branching\n`;
 };
 
 const geometryToStl = (geometry: THREE.BufferGeometry) => {
@@ -1936,42 +1927,117 @@ const geometryToStl = (geometry: THREE.BufferGeometry) => {
         `endfacet`
     );
   }
-  return `solid branching\n${triangles.join("\n")}\nendsolid branching\n`;
+  return `solid etched_block\n${triangles.join("\n")}\nendsolid etched_block\n`;
+};
+
+const geometryToBinaryStl = (geometry: THREE.BufferGeometry) => {
+  const index = geometry.getIndex();
+  const positions = geometry.getAttribute("position");
+  if (!positions) return null;
+  const triangleCount = index ? Math.floor(index.count / 3) : Math.floor(positions.count / 3);
+  const buffer = new ArrayBuffer(84 + triangleCount * 50);
+  const view = new DataView(buffer);
+  view.setUint32(80, triangleCount, true);
+
+  const getVertex = (triIndex: number, vertOffset: number) => {
+    const vertexIndex = index ? index.getX(triIndex * 3 + vertOffset) : triIndex * 3 + vertOffset;
+    return [
+      positions.getX(vertexIndex),
+      positions.getY(vertexIndex),
+      positions.getZ(vertexIndex),
+    ];
+  };
+
+  let offset = 84;
+  for (let tri = 0; tri < triangleCount; tri += 1) {
+    const a = getVertex(tri, 0);
+    const b = getVertex(tri, 1);
+    const c = getVertex(tri, 2);
+    const ux = b[0] - a[0];
+    const uy = b[1] - a[1];
+    const uz = b[2] - a[2];
+    const vx = c[0] - a[0];
+    const vy = c[1] - a[1];
+    const vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.max(1e-6, Math.hypot(nx, ny, nz));
+    const nnx = nx / len;
+    const nny = ny / len;
+    const nnz = nz / len;
+
+    view.setFloat32(offset, nnx, true);
+    view.setFloat32(offset + 4, nny, true);
+    view.setFloat32(offset + 8, nnz, true);
+    view.setFloat32(offset + 12, a[0], true);
+    view.setFloat32(offset + 16, a[1], true);
+    view.setFloat32(offset + 20, a[2], true);
+    view.setFloat32(offset + 24, b[0], true);
+    view.setFloat32(offset + 28, b[1], true);
+    view.setFloat32(offset + 32, b[2], true);
+    view.setFloat32(offset + 36, c[0], true);
+    view.setFloat32(offset + 40, c[1], true);
+    view.setFloat32(offset + 44, c[2], true);
+    view.setUint16(offset + 48, 0, true);
+    offset += 50;
+  }
+  return buffer;
+};
+
+const arrayBufferToBase64 = (buffer: ArrayBuffer) => {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
 };
 
 const exportStl = async () => {
-  if (!currentGeometry && currentFaces.length === 0) {
+  if (!currentGeometry) {
     setStatus("Nothing to export. Generate first.");
     return;
   }
-  const stl = currentGeometry ? geometryToStl(currentGeometry) : voxelToStl(currentFaces);
-  if (!stl) {
+  setBusy(true);
+  setStatus("Exporting STL...");
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  const binary = geometryToBinaryStl(currentGeometry);
+  if (!binary) {
+    setBusy(false);
     setStatus("STL export failed. Try regenerating.");
     return;
   }
-  if (window.api?.saveFile) {
-    const result = await window.api.saveFile({
-      data: stl,
-      encoding: "utf8",
-      suggestedName: "branching_sculpture.stl",
-      filters: [{ name: "STL", extensions: ["stl"] }],
-    });
-    if (result && "ok" in result && !result.ok) {
-      setStatus("STL export canceled.");
+  try {
+    if (window.api?.saveFile) {
+      const base64 = arrayBufferToBase64(binary);
+      const result = await window.api.saveFile({
+        data: base64,
+        encoding: "base64",
+        suggestedName: "etched_block.stl",
+        filters: [{ name: "STL", extensions: ["stl"] }],
+      });
+      if (!result?.ok) {
+        throw new Error("Save canceled or failed.");
+      }
+      setStatus("STL exported.");
+      setBusy(false);
       return;
     }
-  } else {
-    const blob = new Blob([stl], { type: "model/stl" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "branching_sculpture.stl";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    setStatus("STL export failed via desktop save dialog. Downloading instead.");
   }
+  const blob = new Blob([binary], { type: "model/stl" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "etched_block.stl";
+  a.click();
+  URL.revokeObjectURL(url);
   setStatus("STL exported.");
+  setBusy(false);
 };
 
 let generateTimer: number | null = null;
@@ -1989,16 +2055,7 @@ const scheduleDetailUpdate = () => {
     buildProcessedHeightMap();
     updateDepthStudioPreview();
     buildDepthPreviewTexture();
-    if (ui.depthLive.checked) applySurfaceDetail();
-  }, 30);
-};
-
-let projectionTimer: number | null = null;
-const scheduleProjectionUpdate = () => {
-  updateControlLabels();
-  if (projectionTimer) window.clearTimeout(projectionTimer);
-  projectionTimer = window.setTimeout(() => {
-    applySurfaceDetail();
+    if (ui.depthLive.checked) scheduleGenerate();
   }, 30);
 };
 
@@ -2019,10 +2076,14 @@ updateControlLabels();
 updateDepthPreviewLighting();
 updateModeUI();
 
-ui.generate.addEventListener("click", generate);
+ui.generate.addEventListener("click", () => {
+  forceBranchRandomize = true;
+  generate();
+});
 ui.texture.addEventListener("click", () => ui.textureInput.click());
 ui.export.addEventListener("click", exportStl);
-ui.modelMode.addEventListener("change", () => {
+ui.shapeMode.addEventListener("change", () => {
+  forceBranchRandomize = true;
   updateModeUI();
   updateControlLabels();
   userHasMovedCamera = false;
@@ -2039,28 +2100,46 @@ ui.textureInput.addEventListener("change", () => {
   reader.readAsDataURL(file);
   ui.textureInput.value = "";
 });
-ui.branchDensity.addEventListener("input", scheduleGenerate);
-ui.thickness.addEventListener("input", () => {
-  updateControlLabels();
-  scheduleGenerate();
-});
-ui.branchStyle.addEventListener("change", scheduleGenerate);
-ui.branchComplexity.addEventListener("input", () => {
-  updateControlLabels();
-  scheduleGenerate();
-});
-ui.branchVariation.addEventListener("input", () => {
-  updateControlLabels();
-  scheduleGenerate();
-});
-ui.branchProjection.addEventListener("change", scheduleProjectionUpdate);
 ui.etchSize.addEventListener("input", () => {
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.rectWidth.addEventListener("input", () => {
+  forceBranchRandomize = true;
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.rectHeight.addEventListener("input", () => {
+  forceBranchRandomize = true;
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.rectDepth.addEventListener("input", () => {
+  forceBranchRandomize = true;
+  updateControlLabels();
+  scheduleGenerate();
+});
+ui.wallThickness.addEventListener("input", () => {
+  forceBranchRandomize = true;
   updateControlLabels();
   scheduleGenerate();
 });
 ui.etchGain.addEventListener("input", () => {
   updateControlLabels();
   scheduleDetailUpdate();
+});
+ui.etchStyle.addEventListener("change", () => {
+  updateModeUI();
+  updateControlLabels();
+  scheduleDetailUpdate();
+  scheduleGenerate();
+});
+ui.trenchThreshold.addEventListener("input", () => {
+  updateControlLabels();
+  scheduleDetailUpdate();
+});
+ui.trenchThreshold.addEventListener("change", () => {
+  scheduleGenerate();
 });
 ui.etchResolution.addEventListener("input", () => {
   updateControlLabels();
@@ -2071,9 +2150,36 @@ ui.etchAllFaces.addEventListener("change", () => {
   scheduleGenerate();
 });
 ui.etchWrap.addEventListener("change", () => {
+  updateModeUI();
+  scheduleDetailUpdate();
+  scheduleGenerate();
+});
+ui.etchFitFace.addEventListener("change", () => {
+  scheduleDetailUpdate();
+  scheduleGenerate();
+});
+ui.textureRepeat.addEventListener("change", () => {
+  updateModeUI();
+  updateControlLabels();
+  syncTextureWrapModes();
+  scheduleDetailUpdate();
+  scheduleGenerate();
+});
+ui.textureTiles.addEventListener("input", () => {
+  updateControlLabels();
+  syncTextureWrapModes();
+  scheduleDetailUpdate();
   scheduleGenerate();
 });
 ui.etchRotation.addEventListener("change", () => {
+  updateControlLabels();
+  scheduleDetailUpdate();
+});
+ui.etchOffsetX.addEventListener("input", () => {
+  updateControlLabels();
+  scheduleDetailUpdate();
+});
+ui.etchOffsetY.addEventListener("input", () => {
   updateControlLabels();
   scheduleDetailUpdate();
 });
@@ -2109,10 +2215,13 @@ ui.depthLightAngle.addEventListener("input", () => {
   updateDepthPreviewLighting();
 });
 ui.depthLive.addEventListener("change", () => {
-  if (ui.depthLive.checked) applySurfaceDetail();
+  if (ui.depthLive.checked) scheduleGenerate();
 });
 ui.depthPreview.addEventListener("change", () => {
   updateMaterialPreview();
+});
+ui.depthStudioMode.addEventListener("change", () => {
+  updateDepthStudioPreview();
 });
 ui.showTexture.addEventListener("change", () => {
   updateMaterialPreview();
